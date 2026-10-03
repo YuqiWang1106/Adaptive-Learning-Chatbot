@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ loading_title|default:"Preparing Your Learning Path - Learning Workflow Demo" }}{% endblock %}
+
+{% block extra_css %}
+
+
+
+<link rel="stylesheet" href="{% static 'css/learning_goal_loading.css' %}">
+{% endblock %}
+
+{% block navbar %}
+<nav class="lg-loading-nav" aria-label="Loading navigation">
+  <div class="lg-loading-brand" aria-label="Learning Workflow Demo">
+    <svg class="lg-loading-wordmark" viewBox="0 0 164 46" aria-hidden="true" focusable="false">
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="6.5">
+        <path d="M12 34L18 13L30 28L42 13L48 34" />
+        <path d="M63 13H88" />
+        <path d="M63 23H83" />
+        <path d="M63 34H88" />
+        <path d="M100 13H128" />
+        <path d="M114 13V34" />
+        <path d="M139 13L151 24L163 13" />
+        <path d="M151 24V34" />
+      </g>
+    </svg>
+  </div>
+  <div class="lg-loading-user-menu">
+    <button type="button" class="lg-loading-user" aria-label="Account menu" aria-haspopup="menu" aria-expanded="false">
+      <i class="bi bi-person-circle" aria-hidden="true"></i>
+      <span>{{ user.username }}</span>
+    </button>
+    <div class="lg-loading-user-dropdown" role="menu" hidden>
+      <a class="lg-loading-user-dropdown-item" href="{% url 'logout' %}" role="menuitem">Log out</a>
+    </div>
+  </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<section
+  class="lg-loading-page"
+  data-status-url="{{ status_url }}"
+  data-fallback-url="{{ fallback_url }}"
+  data-initial-percent="{{ initial_job.percent|default:4 }}"
+  data-initial-stage="{{ initial_job.stage|default:'queued' }}"
+>
+  <article class="lg-loading-card" aria-live="polite">
+    <div class="lg-loading-art" aria-hidden="true">
+      <div class="lg-loading-orb"></div>
+      <div class="lg-loading-ring"></div>
+    </div>
+
+    <p class="lg-loading-kicker">{{ loading_kicker|default:"Preparing" }}</p>
+    <h1>{{ loading_heading|default:"Building your path" }}</h1>
+    <p class="lg-loading-message" id="lg-loading-message">
+      {% firstof initial_job.message loading_default_message "Starting your learning path." %}
+    </p>
+
+    <div class="lg-loading-time" aria-label="Elapsed time">
+      <span>Elapsed</span>
+      <strong id="lg-loading-elapsed">00:00</strong>
+    </div>
+
+    <div class="lg-loading-progress" aria-label="{{ loading_progress_label|default:'Learning goal preparation progress' }}">
+      <div class="lg-loading-progress-top">
+        <span id="lg-loading-stage">{{ initial_job.stage|default:"queued" }}</span>
+        <strong><span id="lg-loading-percent">{{ initial_job.percent|default:4 }}</span>%</strong>
+      </div>
+      <div class="lg-loading-track">
+        <div class="lg-loading-fill" id="lg-loading-fill" style="width: {{ initial_job.percent|default:4 }}%;"></div>
+      </div>
+    </div>
+
+    <div class="lg-loading-fallback" id="lg-loading-fallback" hidden>
+      <p id="lg-loading-error">Something took longer than expected.</p>
+      <a href="{{ fallback_url }}">{{ loading_fallback_label|default:"Back to learning goal" }}</a>
+    </div>
+  </article>
+</section>
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script>
+  (() => {
+    const userMenuButton = document.querySelector('.lg-loading-user');
+    const userMenu = document.querySelector('.lg-loading-user-dropdown');
+    const closeUserMenu = () => {
+      if (!userMenuButton || !userMenu) return;
+      userMenu.hidden = true;
+      userMenuButton.setAttribute('aria-expanded', 'false');
+    };
+
+    if (userMenuButton && userMenu) {
+      userMenuButton.addEventListener('click', event => {
+        event.stopPropagation();
+        const isOpen = !userMenu.hidden;
+        userMenu.hidden = isOpen;
+        userMenuButton.setAttribute('aria-expanded', String(!isOpen));
+      });
+
+      document.addEventListener('click', event => {
+        if (!userMenu.contains(event.target) && !userMenuButton.contains(event.target)) {
+          closeUserMenu();
+        }
+      });
+
+      document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') {
+          closeUserMenu();
+        }
+      });
+    }
+
+    const page = document.querySelector('.lg-loading-page');
+    if (!page) return;
+
+    const statusUrl = page.dataset.statusUrl;
+    const fallbackUrl = page.dataset.fallbackUrl;
+    const messageEl = document.getElementById('lg-loading-message');
+    const stageEl = document.getElementById('lg-loading-stage');
+    const percentEl = document.getElementById('lg-loading-percent');
+    const fillEl = document.getElementById('lg-loading-fill');
+    const elapsedEl = document.getElementById('lg-loading-elapsed');
+    const fallbackEl = document.getElementById('lg-loading-fallback');
+    const errorEl = document.getElementById('lg-loading-error');
+    let redirecting = false;
+    const startedAt = Date.now();
+
+    const setProgress = (percent) => {
+      const safePercent = Math.max(0, Math.min(100, Number(percent) || 0));
+      if (percentEl) percentEl.textContent = String(Math.round(safePercent));
+      if (fillEl) fillEl.style.width = `${safePercent}%`;
+    };
+
+    const setElapsed = () => {
+      if (!elapsedEl) return;
+      const seconds = Math.max(0, Math.floor((Date.now() - startedAt) / 1000));
+      const minutes = Math.floor(seconds / 60);
+      const remainder = seconds % 60;
+      elapsedEl.textContent = `${String(minutes).padStart(2, '0')}:${String(remainder).padStart(2, '0')}`;
+    };
+
+    const showFailure = (message) => {
+      page.classList.add('is-failed');
+      if (errorEl) errorEl.textContent = message || '{{ loading_failure_message|default:"Learning Workflow Demo could not finish this learning path. Please try again."|escapejs }}';
+      if (fallbackEl) fallbackEl.hidden = false;
+    };
+
+    const finishAndRedirect = (redirectUrl) => {
+      if (redirecting) return;
+      redirecting = true;
+      page.classList.add('is-complete');
+      setTimeout(() => {
+        page.classList.add('is-leaving');
+      }, 420);
+      setTimeout(() => {
+        window.location.href = redirectUrl || fallbackUrl;
+      }, 920);
+    };
+
+    const applyJob = (job) => {
+      const stage = job.stage || 'queued';
+      if (messageEl) messageEl.textContent = job.message || '{{ loading_default_message|default:"Preparing your learning path."|escapejs }}';
+      if (stageEl) stageEl.textContent = stage.replaceAll('_', ' ');
+      setProgress(job.percent);
+
+      if (job.state === 'complete' || job.state === 'succeeded' || job.state === 'degraded') {
+        finishAndRedirect(job.redirect_url);
+        return false;
+      }
+
+      if (job.state === 'failed' || job.state === 'expired') {
+        showFailure(job.message);
+        return false;
+      }
+
+      return true;
+    };
+
+    setProgress(page.dataset.initialPercent);
+    setElapsed();
+    window.setInterval(setElapsed, 1000);
+
+    const poll = async () => {
+      if (redirecting) return;
+      try {
+        const response = await fetch(statusUrl, {
+          headers: { Accept: 'application/json' },
+          credentials: 'same-origin',
+        });
+        const job = await response.json();
+        const shouldContinue = applyJob(job);
+        if (shouldContinue) {
+          window.setTimeout(poll, 900);
+        }
+      } catch (error) {
+        showFailure('{{ loading_connection_error|default:"The connection paused. Please try again."|escapejs }}');
+      }
+    };
+
+    window.setTimeout(poll, 500);
+  })();
+</script>
+{% endblock %}

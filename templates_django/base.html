@@ -1,0 +1,709 @@
+{% load static %}
+<!-- base.html - Enhanced with comments for readability and maintainability -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Learning Workflow Demo{% endblock %}</title>
+    <!-- Include viewport meta tag for responsiveness -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap CSS and Icons -->
+    <link href="{% static 'vendor/bootstrap/bootstrap.min.css' %}" rel="stylesheet">
+
+    <!-- MathJax for LaTeX rendering -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['\\(', '\\)'], ['$', '$']],
+                displayMath: [['\\[', '\\]'], ['$$', '$$']],
+                processEscapes: true,
+                processEnvironments: true,
+                processRefs: true,
+                tags: 'ams',
+                packages: {'[+]': ['ams', 'newcommand', 'configmacros', 'bussproofs', 'color', 'boldsymbol', 'bbox']},
+                macros: {
+                    RR: '{\\mathbb{R}}',
+                    ZZ: '{\\mathbb{Z}}',
+                    NN: '{\\mathbb{N}}',
+                    QQ: '{\\mathbb{Q}}',
+                    CC: '{\\mathbb{C}}',
+                    det: '{\\operatorname{det}}',
+                    tr: '{\\operatorname{tr}}',
+                    rank: '{\\operatorname{rank}}',
+                    span: '{\\operatorname{span}}',
+                    null: '{\\operatorname{null}}',
+                    range: '{\\operatorname{range}}',
+                    lim: '{\\operatorname{lim}}',
+                    sin: '{\\operatorname{sin}}',
+                    cos: '{\\operatorname{cos}}',
+                    tan: '{\\operatorname{tan}}',
+                    ln: '{\\operatorname{ln}}',
+                    log: '{\\operatorname{log}}'
+                }
+            },
+            options: {
+                renderActions: {
+                    addMenu: []
+                },
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process|arithmatex'
+            },
+            startup: {
+                typeset: false,
+                ready: function () {
+                    MathJax.startup.defaultReady();
+                }
+            },
+            loader: {
+                load: ['[tex]/ams', '[tex]/color', '[tex]/bussproofs', '[tex]/boldsymbol', '[tex]/bbox']
+            }
+        };
+    </script>
+    <script id="MathJax-script" defer src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js"></script>
+
+<style>
+/* Monochrome cinematic navbar style */
+.navbar {
+    background: rgba(8, 8, 8, 0.9) !important;
+    backdrop-filter: blur(26px);
+    box-shadow: 0 40px 80px rgba(0, 0, 0, 0.6);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.navbar-brand {
+    font-weight: 500;
+    color: #f1f1f1 !important;
+    font-size: 1.2rem;
+    letter-spacing: 0.16em;
+    text-transform: lowercase;
+    font-family: 'Playfair Display', 'Times New Roman', serif;
+}
+
+.navbar-brand:hover {
+    color: #ffffff !important;
+}
+
+.nav-link {
+    color: rgba(255, 255, 255, 0.7) !important;
+    font-weight: 300;
+    margin: 0 12px;
+    padding: 0.4rem 0;
+    border-radius: 0;
+    transition: color 0.3s ease;
+    font-family: 'Roboto', 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 0.86rem;
+    letter-spacing: 0.12em;
+    text-transform: lowercase;
+}
+
+.nav-link:hover,
+.nav-link.active {
+    background-color: transparent;
+    color: #ffffff !important;
+    box-shadow: none;
+}
+
+.navbar-nav > .nav-item {
+    margin-right: 10px;
+}
+
+/* Glow bar – neutral shimmer */
+.navbar-glow-bar {
+    height: 3px;
+    width: 100%;
+    background: linear-gradient(90deg, #ffffff, #8d8d8d, #ffffff);
+    background-size: 260% 100%;
+    animation: glowbar 7s linear infinite;
+    box-shadow: 0 0 16px rgba(255, 255, 255, 0.25);
+}
+
+@keyframes glowbar {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 100% 50%; }
+}
+
+/* Dropdown menu refinements */
+.dropdown-menu {
+    background-color: rgba(18, 18, 18, 0.98) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+}
+
+.dropdown-item {
+    color: rgba(241, 241, 241, 0.9) !important;
+    font-weight: 400;
+    padding: 10px 16px;
+    font-size: 0.9rem;
+    letter-spacing: 0.04em;
+}
+
+.dropdown-item:hover {
+    background-color: rgba(255, 255, 255, 0.06);
+    color: #ffffff !important;
+}
+
+.dropdown-item:disabled {
+    color: rgba(200, 200, 200, 0.6); /* subtle muted text */
+    pointer-events: none;
+    background-color: transparent;
+}
+
+.nav-user {
+    display: inline-flex;
+    align-items: center;
+}
+
+.nav-user-toggle {
+    border-radius: 999px;
+    padding: 0.3rem 0.9rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.08);
+    color: #f5f5f5;
+    font-size: 0.85rem;
+    letter-spacing: 0.05em;
+    text-transform: lowercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.nav-user-toggle:focus {
+    box-shadow: 0 0 0 0.15rem rgba(255, 255, 255, 0.25);
+}
+
+.nav-user-toggle i {
+    font-size: 0.8rem;
+    color: #f5f5f5;
+}
+
+.nav-user .dropdown-menu {
+    margin-top: 10px;
+    min-width: 180px;
+}
+
+.prefs-nav {
+    padding: 1.2rem 2.6rem;
+    align-items: center;
+    gap: clamp(1rem, 3vw, 2.25rem);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 32px 80px rgba(0, 0, 0, 0.55);
+}
+
+.prefs-nav-left {
+    display: inline-flex;
+    align-items: center;
+    gap: 1.35rem;
+}
+
+.prefs-logo {
+    font-family: 'Playfair Display', 'Times New Roman', serif;
+    letter-spacing: 0.14em;
+    text-transform: lowercase;
+    font-weight: 600;
+    font-size: 1.35rem;
+    color: #ffffff;
+    text-decoration: none;
+}
+
+.prefs-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.prefs-crumb {
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-size: 0.72rem;
+    color: #c7c7c7;
+}
+
+.prefs-tagline {
+    color: #d6d6d6;
+    letter-spacing: 0.04em;
+    font-size: 0.95rem;
+}
+
+.prefs-nav-right {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.9rem;
+    margin-left: auto;
+}
+
+.prefs-session {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.7rem 1rem;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.09));
+    box-shadow: 0 14px 38px rgba(0, 0, 0, 0.5);
+}
+
+.prefs-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #a7ffde;
+    box-shadow: 0 0 0 4px rgba(167, 255, 222, 0.16);
+}
+
+.prefs-eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 0.75rem;
+    color: #c4c4c4;
+}
+
+.prefs-username {
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: #ffffff;
+}
+
+.prefs-menu-toggle {
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: linear-gradient(120deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.06));
+    color: #f5f5f5;
+    border-radius: 14px;
+    padding: 0.7rem 1rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: lowercase;
+    box-shadow: 0 16px 42px rgba(0, 0, 0, 0.5);
+}
+
+.prefs-menu-toggle::after {
+    display: none;
+}
+
+.prefs-menu {
+    min-width: 200px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(10, 10, 10, 0.96);
+    box-shadow: 0 22px 70px rgba(0, 0, 0, 0.55);
+}
+
+.prefs-menu .dropdown-header {
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.78rem;
+}
+
+.prefs-menu .dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #ededed !important;
+}
+
+.prefs-menu .dropdown-item:hover {
+    background: rgba(255, 255, 255, 0.07);
+}
+
+.prefs-logout {
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: linear-gradient(120deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.06));
+    color: #f5f5f5;
+    border-radius: 14px;
+    padding: 0.7rem 1rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: lowercase;
+    box-shadow: 0 16px 42px rgba(0, 0, 0, 0.45);
+    text-decoration: none;
+}
+
+.prefs-logout:hover {
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.26);
+    background: linear-gradient(120deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.1));
+}
+
+@media (max-width: 768px) {
+    .prefs-nav {
+        padding: 1rem 1.5rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .prefs-nav-left {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .prefs-nav-right {
+        width: 100%;
+        justify-content: space-between;
+    }
+}
+
+@media (max-width: 520px) {
+    .prefs-nav-left {
+        align-items: flex-start;
+        gap: 0.8rem;
+        flex-direction: column;
+    }
+
+    .prefs-nav-right {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .prefs-logout {
+        width: 100%;
+        justify-content: center;
+    }
+
+.prefs-menu-toggle {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+.app-flash-stack {
+    position: fixed;
+    top: 18px;
+    left: 50%;
+    z-index: 1080;
+    width: min(420px, calc(100vw - 28px));
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transform: translateX(-50%);
+    pointer-events: none;
+}
+
+.app-flash {
+    padding: 12px 16px 12px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: 1px solid rgba(203, 208, 216, 0.96);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.9);
+    color: #1d2430;
+    box-shadow: 0 18px 46px rgba(24, 34, 48, 0.12);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    opacity: 0;
+    transform: translateY(-10px) scale(0.985);
+    transition: opacity 220ms ease, transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+    pointer-events: auto;
+}
+
+.app-flash.is-visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+.app-flash.is-leaving {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.985);
+}
+
+.app-flash::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    flex: 0 0 8px;
+    border-radius: 999px;
+    background: #94a3b8;
+    box-shadow: 0 0 0 5px rgba(148, 163, 184, 0.14);
+}
+
+.app-flash-message {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: 0.9rem;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.app-flash-close {
+    width: 28px;
+    height: 28px;
+    flex: 0 0 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: #6b7280;
+    font-size: 0.95rem;
+    line-height: 1;
+    transition: background 160ms ease, color 160ms ease;
+}
+
+.app-flash-close:hover,
+.app-flash-close:focus-visible {
+    background: rgba(17, 24, 39, 0.08);
+    color: #111827;
+    outline: none;
+}
+
+.app-flash-success::before {
+    background: #1f9d66;
+    box-shadow: 0 0 0 5px rgba(31, 157, 102, 0.14);
+}
+
+.app-flash-info::before {
+    background: #64748b;
+    box-shadow: 0 0 0 5px rgba(100, 116, 139, 0.14);
+}
+
+.app-flash-warning::before {
+    background: #c58a16;
+    box-shadow: 0 0 0 5px rgba(197, 138, 22, 0.14);
+}
+
+.app-flash-error::before,
+.app-flash-danger::before {
+    background: #c24b4b;
+    box-shadow: 0 0 0 5px rgba(194, 75, 75, 0.14);
+}
+
+@media (max-width: 640px) {
+    .app-flash-stack {
+        top: 12px;
+        width: calc(100vw - 20px);
+    }
+
+    .app-flash {
+        padding: 11px 14px 11px 16px;
+        border-radius: 14px;
+    }
+}
+
+
+/* Fancy toggle button (sun/moon) */
+#theme-toggle {
+    border: none;
+    background: linear-gradient(135deg, #f5f5f5, #9c9c9c);
+    color: #050505;
+    border-radius: 50%;
+    padding: 8px 10px;
+    font-size: 1.2rem;
+    box-shadow: 0 0 12px rgba(0, 200, 83, 0.4);
+    transition: all 0.3s ease-in-out;
+}
+
+#theme-toggle:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 18px rgba(0, 200, 83, 0.5);
+}
+</style>
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="{% static 'vendor/bootstrap-icons/bootstrap-icons.css' %}">
+    <!-- Base theme CSS -->
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <link rel="stylesheet" href="{% static 'css/goal_sidebar.css' %}">
+    {% block extra_css %}{% endblock %}
+
+    <!-- Favicon -->
+    <link rel="icon" href="{% static 'images/favicon.svg' %}" type="image/svg+xml">
+</head>
+{% with url_name=request.resolver_match.url_name|default:'' %}
+<body class="d-flex flex-column min-vh-100 {% if url_name == 'login' or url_name == 'register' or url_name == 'setup_preferences' or url_name == 'learning_goal' or url_name == 'self_assessment' or url_name == 'chat' or url_name == 'learning_goal_dashboard' %}has-landing-nav{% endif %} {% if url_name == 'learning_goal' or url_name == 'self_assessment' or url_name == 'chat' or url_name == 'learning_goal_dashboard' %}goal-sidebar-layout{% endif %}">
+    <!-- Navigation Bar -->
+    <header role="banner">
+        {% block navbar %}
+            {% if url_name == 'login' or url_name == 'register' %}
+            <nav class="landing-nav d-flex justify-content-between align-items-center" role="navigation" aria-label="Auth Navigation">
+                <a class="landing-brand" aria-label="Back to home" href="{% url 'index' %}">Learning Workflow Demo</a>
+            </nav>
+            {% elif url_name == 'setup_preferences' %}
+            <nav class="landing-nav prefs-nav" role="navigation" aria-label="Preferences Navigation">
+                <div class="prefs-nav-left">
+                    <a class="prefs-logo" aria-label="Back to home" href="{% url 'index' %}">Learning Workflow Demo</a>
+                    <div class="prefs-meta">
+                        <span class="prefs-crumb">Preference setup</span>
+                        <span class="prefs-tagline">Tune your profile so Learning Workflow Demo can adapt.</span>
+                    </div>
+                </div>
+                {% if user.is_authenticated %}
+                <div class="prefs-nav-right">
+                    <div class="prefs-session" aria-label="Signed in user">
+                        <span class="prefs-dot" aria-hidden="true"></span>
+                        <div>
+                            <div class="prefs-username">{{ user.username }}</div>
+                        </div>
+                    </div>
+                    <a class="prefs-logout" href="{% url 'logout' %}" aria-label="Logout">
+                        <i class="bi bi-box-arrow-right"></i>
+                        <span>Logout</span>
+                    </a>
+                </div>
+                {% endif %}
+            </nav>
+            {% else %}
+            <nav class="navbar navbar-expand-lg" role="navigation" aria-label="Main Navigation">
+                <div class="container-fluid">
+                    <a class="navbar-brand" aria-label="Learning Workflow Demo Home" href="{% url 'index' %}">Learning Workflow Demo</a>
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                        aria-controls="navbarNav" aria-expanded="false" aria-label="More navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="collapse navbar-collapse" id="navbarNav">
+                        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                            {% if user.is_authenticated %}
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{% url 'chat' %}" aria-label="Chat">Chat</a>
+                                </li>
+                            {% endif %}
+
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'about' %}" aria-label="About Page">About</a>
+                            </li>
+
+                        </ul>
+                        <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center">
+                            <!-- Dark/Light Mode Toggle -->
+                            <li class="nav-item me-3">
+                                <button id="theme-toggle" class="btn btn-outline-secondary" aria-label="Toggle Dark and Light Mode">
+                                    <i class="bi bi-moon-fill" id="theme-icon"></i>
+                                </button>
+                            </li>
+
+                            {% if user.is_authenticated %}
+                                <li class="nav-item">
+                                    <div class="dropdown nav-user">
+                                        <button class="nav-user-toggle dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <span class="text-secondary">Welcome</span>
+                                            <span class="fw-semibold">{{ user.username }}</span>
+                                            <i class="bi bi-caret-down-fill"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                            <li><a class="dropdown-item text-danger" href="{% url 'logout' %}" aria-label="Logout">Logout</a></li>
+                                        </ul>
+                                    </div>
+                                </li>
+                            {% else %}
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{% url 'login' %}" aria-label="Login">Login</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{% url 'register' %}" aria-label="Register">Register</a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+            <div class="navbar-glow-bar"></div>
+            {% endif %}
+        {% endblock %}
+    </header>
+
+
+    <!-- Flash Messages -->
+    {% if messages %}
+    <div class="app-flash-stack" aria-live="polite" aria-atomic="true">
+        {% for message in messages %}
+            <div class="app-flash app-flash-{{ message.tags|default:'info' }}" role="status">
+                <div class="app-flash-message">{{ message }}</div>
+                <button type="button" class="app-flash-close" aria-label="Dismiss message">&times;</button>
+            </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Main Content -->
+<!-- Main content begins -->
+    <main class="container my-4 flex-grow-1" role="main">
+        {% block content %}{% endblock %}
+<!-- Main content ends -->
+    </main>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="{% static 'vendor/bootstrap/bootstrap.bundle.min.js' %}"></script>
+    <script>
+      // Auto-dismiss flash notices
+      window.addEventListener('DOMContentLoaded', () => {
+        const notices = document.querySelectorAll('.app-flash');
+        notices.forEach((notice, index) => {
+          const dismiss = () => {
+            notice.classList.remove('is-visible');
+            notice.classList.add('is-leaving');
+            window.setTimeout(() => {
+              notice.remove();
+            }, 260);
+          };
+
+          requestAnimationFrame(() => {
+            notice.classList.add('is-visible');
+          });
+
+          const closeBtn = notice.querySelector('.app-flash-close');
+          if (closeBtn) {
+            closeBtn.addEventListener('click', dismiss);
+          }
+
+          window.setTimeout(dismiss, 4200 + (index * 120));
+        });
+      });
+    </script>
+
+    <!-- Dark/Light Mode Script -->
+    <script>
+        // Function to toggle dark mode
+        function toggleDarkMode() {
+            const body = document.body;
+            const themeIcon = document.getElementById('theme-icon');
+            body.classList.toggle('dark-mode');
+
+            if (body.classList.contains('dark-mode')) {
+                themeIcon.classList.remove('bi-sun-fill');
+                themeIcon.classList.add('bi-moon-fill');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                themeIcon.classList.remove('bi-moon-fill');
+                themeIcon.classList.add('bi-sun-fill');
+                localStorage.setItem('theme', 'light');
+            }
+        }
+
+        // Check if the theme toggle button exists before adding the event listener
+        const themeToggleButton = document.getElementById('theme-toggle');
+        if (themeToggleButton) {
+            themeToggleButton.addEventListener('click', toggleDarkMode);
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme');
+            const body = document.body;
+            const themeIcon = document.getElementById('theme-icon');
+
+            if (savedTheme === 'dark') {
+                body.classList.add('dark-mode');
+                if (themeIcon) {
+                    themeIcon.classList.remove('bi-sun-fill');
+                    themeIcon.classList.add('bi-moon-fill');
+                }
+            } else {
+                body.classList.remove('dark-mode');
+                if (themeIcon) {
+                    themeIcon.classList.remove('bi-moon-fill');
+                    themeIcon.classList.add('bi-sun-fill');
+                }
+            }
+        });
+    </script>
+
+    {% block scripts %}{% endblock %}
+</body>
+{% endwith %}
+</html>

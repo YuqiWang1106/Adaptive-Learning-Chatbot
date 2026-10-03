@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ report.student.username }} Learning Report - Learning Workflow Demo{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/teacher_portal.css' %}">{% endblock %}
+{% block navbar %}{% include "teacher_portal/_teacher_nav.html" %}{% endblock %}
+
+{% block content %}
+<main class="tp-shell" aria-label="Student learning report">
+  <div class="tp-breadcrumbs"><a href="{% url 'teacher_dashboard' %}">Overview</a><i class="bi bi-chevron-right"></i><a href="{% url 'teacher_classroom_detail' report.classroom.id %}">{{ report.classroom.name }}</a><i class="bi bi-chevron-right"></i><strong>{{ report.student.username }}</strong></div>
+
+  <section class="tp-student-hero">
+    <div class="tp-student-identity"><span class="tp-avatar tp-avatar-large">{{ report.student.username|slice:":1"|upper }}</span><div><p class="tp-kicker">Student learning profile</p><h1>{{ report.student.username }}</h1><p>{{ report.student.academic_level|default:"Academic level not set" }} · {{ report.student.email }} · Joined {{ report.classroom.name }} {{ report.classroom.accepted_at|slice:":10" }}</p></div></div>
+    <div class="tp-heading-actions"><button class="tp-quiet-button" type="button" data-print-page><i class="bi bi-printer"></i>Print summary</button><a class="tp-button" href="#learning-goals"><i class="bi bi-bullseye"></i>Browse goals</a></div>
+  </section>
+
+  <section class="tp-metric-grid" aria-label="Student overview">
+    <article class="tp-metric tp-metric-primary"><div class="tp-metric-icon"><i class="bi bi-bullseye"></i></div><div><span>Learning goals</span><strong>{{ report.summary.learning_goal_count }}</strong><small>{{ report.summary.priority_goal_count }} priority review</small></div></article>
+    <article class="tp-metric"><div class="tp-metric-icon"><i class="bi bi-clipboard2-pulse"></i></div><div><span>Self-assessments</span><strong>{{ report.summary.assessment_count }}</strong><small>Baseline reflections</small></div></article>
+    <article class="tp-metric"><div class="tp-metric-icon"><i class="bi bi-chat-square-text"></i></div><div><span>Learning chats</span><strong>{{ report.summary.chat_count }}</strong><small>Conversation evidence</small></div></article>
+    <article class="tp-metric {% if report.summary.quality_state.key == 'attention' %}tp-metric-warning{% endif %}"><div class="tp-metric-icon"><i class="bi bi-activity"></i></div><div><span>Overall quality</span><strong>{{ report.summary.overall_quality_score }}%</strong><small>{{ report.summary.quality_state.label }}</small></div></article>
+  </section>
+
+  <section class="tp-overview-grid tp-section">
+    <article class="tp-panel">
+      <div class="tp-card-heading"><div><p class="tp-kicker">Across all goals</p><h2>Mastery snapshot</h2></div><span class="tp-status tp-status-{{ report.summary.quality_state.key }}"><i></i>{{ report.summary.quality_state.label }}</span></div>
+      <div class="tp-dimension-list">{% for dimension in report.summary.dimension_rows %}<article><div class="tp-dimension-icon tp-dimension-{{ dimension.key }}"><i class="bi {{ dimension.icon }}"></i></div><div><div class="tp-dimension-head"><strong>{{ dimension.label }}</strong><span>{{ dimension.value }}%</span></div><span class="tp-progress"><i class="tp-progress-{{ dimension.key }}" style="width: {{ dimension.value }}%"></i></span><small>{{ dimension.description }}</small></div></article>{% endfor %}</div>
+    </article>
+    <article class="tp-panel">
+      <div class="tp-card-heading"><div><p class="tp-kicker">Teacher focus</p><h2>Recommended next steps</h2></div></div>
+      <div class="tp-recommendation-list">{% for recommendation in report.recommendations %}<article class="tp-recommendation tp-recommendation-{{ recommendation.tone }}"><i class="bi {{ recommendation.icon }}"></i><div><strong>{{ recommendation.title }}</strong><p>{{ recommendation.body }}</p></div></article>{% endfor %}</div>
+    </article>
+  </section>
+
+  <section class="tp-section" id="learning-goals">
+    <div class="tp-section-head"><div><p class="tp-kicker">Goal navigator</p><h2>Learning goal reports</h2><p>Open a goal to see mastery, self-assessment, concept evidence, chats, probes, and teaching actions.</p></div>{% if report.goals %}<label class="tp-search-control"><i class="bi bi-search"></i><span class="visually-hidden">Search learning goals</span><input type="search" placeholder="Search goals" data-goal-search autocomplete="off"></label>{% endif %}</div>
+    {% if report.goals %}
+    <div class="tp-goal-grid" data-goal-list>
+      {% for goal in report.goals %}
+      <article class="tp-goal-card" data-goal-nav-item data-search-text="{{ goal.title }} {{ goal.domain }} {{ goal.branch }} {{ goal.analysis.status.label }}">
+        <div class="tp-goal-card-head"><span class="tp-status tp-status-{{ goal.analysis.status.key }}"><i></i>{{ goal.analysis.status.label }}</span><span class="tp-goal-date">Updated {{ goal.last_activity_at|slice:":10" }}</span></div>
+        <div><p class="tp-goal-domain">{{ goal.domain|default:"General" }}{% if goal.branch %} / {{ goal.branch }}{% endif %}</p><h3>{{ goal.title }}</h3><p>{{ goal.preference_text|truncatechars:145 }}</p></div>
+        <div class="tp-goal-score-row"><div><span>Quality</span><strong>{{ goal.mastery.quality_score }}%</strong></div><div><span>Weakest</span><strong>{{ goal.mastery.weakest_label }}</strong></div><div><span>Evidence</span><strong>{{ goal.evidence_total }}</strong></div></div>
+        <div class="tp-goal-card-footer"><span><i class="bi bi-chat-square-text"></i>{{ goal.chat_count }} chats</span><span><i class="bi bi-bullseye"></i>{{ goal.answered_probe_count }} answered</span><a href="{% url 'teacher_student_goal_report' report.classroom.id report.student.id goal.id %}">Open report<i class="bi bi-arrow-right"></i></a></div>
+      </article>
+      {% endfor %}
+    </div>
+    <div class="tp-empty" data-goal-empty hidden><i class="bi bi-search"></i><strong>No matching learning goals</strong><span>Try a different title, domain, or status.</span></div>
+    {% else %}<div class="tp-empty tp-empty-large"><span class="tp-empty-icon"><i class="bi bi-bullseye"></i></span><strong>No learning goals yet</strong><span>This student has not created a goal, so there is no goal-level report to review.</span></div>{% endif %}
+  </section>
+</main>
+{% endblock %}
+
+{% block scripts %}{{ block.super }}<script src="{% static 'js/teacher_portal.js' %}"></script>{% endblock %}

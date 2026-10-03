@@ -1,0 +1,879 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Learning Dashboard - Learning Workflow Demo{% endblock %}
+
+{% block extra_css %}
+
+
+
+<link rel="stylesheet" href="{% static 'css/learning_goal.css' %}">
+<link rel="stylesheet" href="{% static 'css/adaptive_dashboard.css' %}">
+{% endblock %}
+
+{% block navbar %}
+<nav class="lg-top-nav" aria-label="Learning dashboard navigation">
+  <div class="lg-brand" aria-label="Learning Workflow Demo">
+    <svg class="lg-wordmark" viewBox="0 0 164 46" aria-hidden="true" focusable="false">
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="6.5">
+        <path d="M12 34L18 13L30 28L42 13L48 34" />
+        <path d="M63 13H88" />
+        <path d="M63 23H83" />
+        <path d="M63 34H88" />
+        <path d="M100 13H128" />
+        <path d="M114 13V34" />
+        <path d="M139 13L151 24L163 13" />
+        <path d="M151 24V34" />
+      </g>
+    </svg>
+  </div>
+
+  <div class="lg-nav-search" role="search">
+    <label class="visually-hidden" for="lg-nav-search-input">Search learning goals</label>
+    <input id="lg-nav-search-input" type="search" placeholder="Search" autocomplete="off">
+    <i class="bi bi-search" aria-hidden="true"></i>
+  </div>
+
+  <div class="lg-nav-actions">
+    <button type="button" class="lg-material-btn" data-material-modal-open aria-label="Upload course materials">
+      <i class="bi bi-upload" aria-hidden="true"></i>
+      <span>Upload</span>
+    </button>
+    <div class="lg-user-menu">
+      <button type="button" class="lg-user-chip" aria-label="Account menu" aria-haspopup="menu" aria-expanded="false">
+        <i class="bi bi-person-circle" aria-hidden="true"></i>
+        <span>{{ user.username }}</span>
+      </button>
+      <div class="lg-user-dropdown" role="menu" hidden>
+        <a class="lg-user-dropdown-item" href="{% url 'logout' %}" role="menuitem">Log out</a>
+      </div>
+    </div>
+  </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="goal-app-shell dashboard-app-shell">
+  {% include "learning_goal/sidebar.html" %}
+
+  <main
+    class="goal-main dashboard-main"
+    data-progress-url="{% url 'learning_goal_adaptive_progress' learning_goal_id %}"
+    data-probe-offer-url="{% url 'adaptive_agent:active_probe_offer' learning_goal_id %}?surface=track"
+    data-probe-offer-action-base="/api/v2/probe-offers/"
+    data-probe-submit-template="{% url 'learning_goal_adaptive_probe_submit' learning_goal_id 0 %}"
+    data-probe-skip-template="{% url 'learning_goal_adaptive_probe_skip' learning_goal_id 0 %}"
+    aria-label="Learning curve dashboard"
+  >
+    <section class="dashboard-shell">
+      <article class="dashboard-card dashboard-card-overview">
+        <div class="dashboard-panel-hero" aria-hidden="true">
+          <span>Learning Curve Dashboard</span>
+        </div>
+        <div class="dashboard-overview-body">
+          <div class="dashboard-overview-copy">
+            <h1>{% firstof learning_goal.title learning_goal.preference_text "Learning goal" %}</h1>
+            <p class="dashboard-subtitle">
+              Track mastery evidence, intervention policy, and learning pattern for this goal.
+            </p>
+          </div>
+          <a class="dashboard-chat-link" href="{% url 'chat' %}?learning_goal_id={{ learning_goal_id }}">
+            <span>Continue chat</span>
+            <i class="bi bi-arrow-right" aria-hidden="true"></i>
+          </a>
+        </div>
+
+        <section class="dashboard-stat-grid" aria-label="Current adaptive status">
+          <article class="dashboard-stat-card dashboard-stat-card-mode">
+            <div class="dashboard-stat-head">
+              <span><i class="bi bi-compass" aria-hidden="true"></i> Teaching mode</span>
+              <button class="dashboard-help-btn" type="button" aria-label="What is teaching mode?" data-help="This is the teaching style Learning Workflow Demo is using right now based on your recent performance.">?</button>
+            </div>
+            <strong data-stat-tier>Collecting evidence</strong>
+          </article>
+          <article class="dashboard-stat-card dashboard-stat-card-weak">
+            <div class="dashboard-stat-head">
+              <span><i class="bi bi-bullseye" aria-hidden="true"></i> Weakest dimension</span>
+              <button class="dashboard-help-btn" type="button" aria-label="What is weakest dimension?" data-help="This is the skill area you currently need the most support in.">?</button>
+            </div>
+            <strong data-stat-weakest>Not enough data</strong>
+          </article>
+          <article class="dashboard-stat-card dashboard-stat-card-quality">
+            <div class="dashboard-stat-head">
+              <span><i class="bi bi-activity" aria-hidden="true"></i> Quality score</span>
+              <button class="dashboard-help-btn" type="button" aria-label="What is quality score?" data-help="This is your overall mastery score for this goal, based on recent scored answers.">?</button>
+            </div>
+            <strong data-stat-quality>--</strong>
+          </article>
+          <article class="dashboard-stat-card dashboard-stat-card-concept">
+            <div class="dashboard-stat-head">
+              <span><i class="bi bi-graph-up-arrow" aria-hidden="true"></i> Goal trend</span>
+              <button class="dashboard-help-btn" type="button" aria-label="What is goal trend?" data-help="This is the overall learning trend for the whole goal, based on eligible self-assessment and mastery review evidence.">?</button>
+            </div>
+            <strong data-stat-pattern>--</strong>
+          </article>
+        </section>
+      </article>
+
+      <section class="dashboard-review-workspace" data-review-workspace hidden aria-live="polite">
+        <article class="dashboard-card dashboard-probe-card" data-review-card></article>
+      </section>
+
+      <section class="dashboard-grid">
+        <article class="dashboard-card dashboard-card-chart">
+          <div class="dashboard-card-head">
+            <div>
+              <p class="dashboard-kicker">Four-dimension trend</p>
+              <h2>Mastery curve</h2>
+            </div>
+            <button type="button" class="dashboard-event-log-toggle" data-event-log-open>0 scored events</button>
+          </div>
+          <canvas id="dashboard-mastery-chart" width="940" height="320" aria-label="Facts, procedures, strategies, and rationales mastery curve"></canvas>
+          <div class="dashboard-legend" aria-hidden="true">
+            <span><i class="facts"></i>Facts</span>
+            <span><i class="procedures"></i>Procedures</span>
+            <span><i class="strategies"></i>Strategies</span>
+            <span><i class="rationales"></i>Rationales</span>
+          </div>
+        </article>
+      </section>
+
+      <section class="dashboard-grid dashboard-grid-lower">
+        <article class="dashboard-card">
+          <div class="dashboard-card-head">
+            <div>
+              <p class="dashboard-kicker">Mastery snapshot</p>
+              <h2>How strong each skill area is</h2>
+            </div>
+          </div>
+          <div class="dashboard-bars" data-mastery-bars></div>
+        </article>
+
+        <article class="dashboard-card dashboard-curve-card">
+          <div class="dashboard-card-head">
+            <div>
+              <p class="dashboard-kicker">Overall goal trend</p>
+              <h2 data-curve-title>Collecting evidence</h2>
+            </div>
+          </div>
+          <p class="dashboard-curve-meta" data-curve-meta>Confidence -- · 0 evidence points</p>
+          <p class="dashboard-policy-copy" data-curve-copy>
+            Trend intervention starts only after enough scored evidence is available.
+          </p>
+        </article>
+
+        <article class="dashboard-card dashboard-concept-pattern-card">
+          <div class="dashboard-card-head">
+            <div>
+              <p class="dashboard-kicker">Concept patterns</p>
+              <h2 data-concept-title>No concept selected</h2>
+            </div>
+            <button type="button" class="dashboard-event-log-toggle" data-concepts-open>View all</button>
+          </div>
+          <p class="dashboard-curve-meta" data-concept-meta>0 concepts tracked</p>
+          <p class="dashboard-policy-copy" data-concept-copy>
+            Concept-level trends appear after mastery evidence is available.
+          </p>
+        </article>
+
+        <article class="dashboard-card">
+          <div class="dashboard-card-head">
+            <div>
+              <p class="dashboard-kicker">Current intervention</p>
+              <h2 data-policy-title>Waiting for mastery state</h2>
+            </div>
+          </div>
+          <p class="dashboard-policy-copy" data-policy-copy>
+            Complete self-assessment or continue chat to build a stronger adaptive signal.
+          </p>
+        </article>
+      </section>
+
+      <div class="dashboard-log-modal" data-event-log-modal hidden aria-hidden="true">
+        <div class="dashboard-log-backdrop" data-event-log-close></div>
+        <section class="dashboard-log-dialog" role="dialog" aria-modal="true" aria-labelledby="dashboard-log-title">
+          <header class="dashboard-log-head">
+            <h2 id="dashboard-log-title">Scoring Log</h2>
+            <button type="button" class="dashboard-log-close" data-event-log-close aria-label="Close scoring log">
+              <i class="bi bi-x-lg" aria-hidden="true"></i>
+            </button>
+          </header>
+          <div class="dashboard-log-list" data-event-log-list></div>
+        </section>
+      </div>
+
+      <div class="dashboard-log-modal" data-concept-modal hidden aria-hidden="true">
+        <div class="dashboard-log-backdrop" data-concept-close></div>
+        <section class="dashboard-log-dialog dashboard-concept-dialog" role="dialog" aria-modal="true" aria-labelledby="dashboard-concept-title">
+          <header class="dashboard-log-head">
+            <h2 id="dashboard-concept-title">Concept Patterns</h2>
+            <button type="button" class="dashboard-log-close" data-concept-close aria-label="Close concept patterns">
+              <i class="bi bi-x-lg" aria-hidden="true"></i>
+            </button>
+          </header>
+          <div class="dashboard-log-list dashboard-concept-list" data-concept-list></div>
+        </section>
+      </div>
+    </section>
+  </main>
+</div>
+
+{% include "learning_goal/material_upload_modal.html" %}
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script src="{% static 'vendor/chart.js/chart.umd.min.js' %}"></script>
+<script>
+(() => {
+  const root = document.querySelector('.dashboard-main');
+  if (!root) return;
+
+  const searchInput = document.getElementById('lg-nav-search-input');
+  const goalItems = Array.from(document.querySelectorAll('.goal-item[data-goal-search]'));
+  const searchEmpty = document.querySelector('.goal-search-empty');
+  const sidebarToggle = document.querySelector('.goal-sidebar-toggle');
+  const userMenuButton = document.querySelector('.lg-user-chip');
+  const userMenu = document.querySelector('.lg-user-dropdown');
+  const progressUrl = root.dataset.progressUrl || '';
+  const probeOfferUrl = root.dataset.probeOfferUrl || '';
+  const probeOfferActionBase = root.dataset.probeOfferActionBase || '';
+  const probeSubmitTemplate = root.dataset.probeSubmitTemplate || '';
+  const probeSkipTemplate = root.dataset.probeSkipTemplate || '';
+  const reviewWorkspace = root.querySelector('[data-review-workspace]');
+  const reviewCard = root.querySelector('[data-review-card]');
+  const eventLogModal = root.querySelector('[data-event-log-modal]');
+  const eventLogList = root.querySelector('[data-event-log-list]');
+  const eventLogOpenButton = root.querySelector('[data-event-log-open]');
+  const eventLogCloseButtons = root.querySelectorAll('[data-event-log-close]');
+  const conceptModal = root.querySelector('[data-concept-modal]');
+  const conceptList = root.querySelector('[data-concept-list]');
+  const conceptOpenButton = root.querySelector('[data-concepts-open]');
+  const conceptCloseButtons = root.querySelectorAll('[data-concept-close]');
+  let masteryChart = null;
+  let latestCurves = {};
+  let latestEventLog = [];
+  let latestConceptStates = [];
+  let resizeRaf = null;
+  let latestProbeOffer = null;
+
+  const dimensions = ['facts', 'procedures', 'strategies', 'rationales'];
+  const labels = { facts: 'Facts', procedures: 'Procedures', strategies: 'Strategies', rationales: 'Rationales' };
+  const colors = { facts: '#1f6fbf', procedures: '#df7b18', strategies: '#238b39', rationales: '#c53030' };
+
+  const escapeHtml = (value) => String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
+  const pct = (value) => `${Math.round(Math.max(0, Math.min(1, Number(value) || 0)) * 100)}%`;
+  const pretty = (value) => String(value || '')
+    .replace(/_/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase()
+    .replace(/\b\w/g, char => char.toUpperCase());
+
+  const csrfToken = () => {
+    const match = document.cookie.match(/(?:^|;\s*)csrftoken=([^;]+)/);
+    return match ? decodeURIComponent(match[1]) : '';
+  };
+
+  const scopedProbeUrl = (template, probeId) => template.replace('/0/', `/${encodeURIComponent(probeId)}/`);
+  const reviewReason = (offer) => ({
+    initial_calibration: 'A short review will help calibrate your starting point.',
+    calibration: 'A short review will help calibrate your starting point.',
+    forgetting: 'This concept is ready to be revisited.',
+    chat_count: 'You have done enough new learning for a quick check-in.',
+    time: 'It has been a while since this concept was reviewed.',
+    review_due: 'This concept is ready for a brief evidence-based review.',
+  }[String(offer.trigger || offer.reason || '')] || 'This concept is ready for a brief evidence-based review.');
+
+  async function postJson(url, payload = {}) {
+    const response = await fetch(url, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken(),
+      },
+      body: JSON.stringify(payload),
+    });
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(body.error || `request_failed_${response.status}`);
+    return body;
+  }
+
+  function hideReviewWorkspace() {
+    if (!reviewWorkspace || !reviewCard) return;
+    reviewWorkspace.hidden = true;
+    reviewCard.replaceChildren();
+  }
+
+  function renderProbeOffer(offer) {
+    if (!reviewWorkspace || !reviewCard || !offer) return;
+    const target = offer.target || {};
+    const ready = offer.status === 'ready' && offer.probe_id;
+    reviewCard.innerHTML = `
+      <div class="dashboard-card-head">
+        <div>
+          <p class="dashboard-kicker">Mastery review · Optional</p>
+          <h2>${ready ? 'Your mastery review is ready' : 'A mastery review is available'}</h2>
+        </div>
+        <span class="dashboard-review-status">${escapeHtml(pretty(offer.status || 'pending'))}</span>
+      </div>
+      <p class="dashboard-policy-copy">A reliable result may update your learning progress.</p>
+      <p class="dashboard-review-message">${escapeHtml(reviewReason(offer))}</p>
+      <dl class="dashboard-review-meta">
+        <div><dt>Target</dt><dd>${escapeHtml(target.concept_label || 'Current learning goal')} · ${escapeHtml(pretty(target.dimension || ''))}</dd></div>
+        <div><dt>Estimated time</dt><dd>${escapeHtml(offer.estimated_minutes || '2–3')} minutes</dd></div>
+      </dl>
+      <p class="dashboard-review-message" data-review-message>${ready ? 'Your questions are shown below.' : 'Questions are prepared only after you choose Start review.'}</p>
+      <div class="dashboard-probe-actions">
+        ${ready ? '' : '<button type="button" data-offer-accept>Start review</button>'}
+        ${ready ? '' : '<button type="button" data-offer-snooze>Remind me later</button>'}
+        ${ready ? '' : '<button type="button" data-offer-dismiss>Dismiss</button>'}
+      </div>
+    `;
+    reviewWorkspace.hidden = false;
+
+    const message = reviewCard.querySelector('[data-review-message]');
+    const runAction = async (action, button) => {
+      const buttons = reviewCard.querySelectorAll('button');
+      buttons.forEach(item => { item.disabled = true; });
+      if (message) message.textContent = action === 'accept' ? 'Preparing your review…' : 'Saving your choice…';
+      try {
+        const payload = await postJson(`${probeOfferActionBase}${encodeURIComponent(offer.offer_id)}/${action}`, {});
+        latestProbeOffer = payload.probe_offer || null;
+        if (action === 'snooze' || action === 'dismiss') {
+          hideReviewWorkspace();
+          return;
+        }
+        renderProbeOffer(latestProbeOffer);
+        window.setTimeout(refresh, 700);
+      } catch (error) {
+        buttons.forEach(item => { item.disabled = false; });
+        if (message) message.textContent = 'I could not update this review. Please try again.';
+        if (button) button.focus();
+      }
+    };
+    reviewCard.querySelector('[data-offer-accept]')?.addEventListener('click', event => runAction('accept', event.currentTarget));
+    reviewCard.querySelector('[data-offer-snooze]')?.addEventListener('click', event => runAction('snooze', event.currentTarget));
+    reviewCard.querySelector('[data-offer-dismiss]')?.addEventListener('click', event => runAction('dismiss', event.currentTarget));
+  }
+
+  function renderFormalProbe(probe) {
+    if (!reviewWorkspace || !reviewCard || !probe) return;
+    const rubric = probe.expected_rubric || {};
+    const items = Array.isArray(rubric.probe_items) && rubric.probe_items.length
+      ? rubric.probe_items
+      : [{ item_id: 'primary', question_text: probe.question_text, target_dimension: probe.target_dimension }];
+    reviewCard.innerHTML = `
+      <div class="dashboard-card-head">
+        <div>
+          <p class="dashboard-kicker">Mastery review</p>
+          <h2>Short mastery review</h2>
+        </div>
+        <span class="dashboard-review-status">${items.length} item${items.length === 1 ? '' : 's'}</span>
+      </div>
+      <p class="dashboard-policy-copy">A reliable result may update your learning progress after grading is complete.</p>
+      <form data-probe-form>
+        <div class="dashboard-probe-items">
+          ${items.map((item, index) => `
+            <label class="dashboard-probe-item">
+              <span>${index + 1}. ${escapeHtml(item.question_text || probe.question_text || '')}</span>
+              <textarea data-probe-answer data-item-id="${escapeHtml(item.item_id || `item-${index + 1}`)}" rows="3" maxlength="4000" aria-required="true" placeholder="Write your answer and reasoning"></textarea>
+            </label>
+          `).join('')}
+        </div>
+        <p class="dashboard-review-message" data-review-message>Please answer every item before submitting. You may also skip this review.</p>
+        <div class="dashboard-probe-actions">
+          <button type="submit">Submit review</button>
+          <button type="button" data-probe-skip>Skip</button>
+        </div>
+      </form>
+    `;
+    reviewWorkspace.hidden = false;
+    const form = reviewCard.querySelector('[data-probe-form]');
+    const message = reviewCard.querySelector('[data-review-message]');
+    const setDisabled = value => reviewCard.querySelectorAll('button, textarea').forEach(item => { item.disabled = value; });
+    form?.addEventListener('submit', async event => {
+      event.preventDefault();
+      const answers = Array.from(reviewCard.querySelectorAll('[data-probe-answer]')).map(input => ({
+        item_id: input.dataset.itemId,
+        answer: input.value.trim(),
+      }));
+      if (answers.some(item => !item.answer)) {
+        if (message) message.textContent = 'Please answer each item, or choose Skip.';
+        return;
+      }
+      setDisabled(true);
+      if (message) message.textContent = 'Processing your review… Your learning progress will update only if grading is reliable.';
+      try {
+        await postJson(scopedProbeUrl(probeSubmitTemplate, probe.id), { answers });
+        hideReviewWorkspace();
+        await refresh();
+      } catch (error) {
+        setDisabled(false);
+        if (message) message.textContent = 'I could not submit this review. Your learning progress was not changed.';
+      }
+    });
+    reviewCard.querySelector('[data-probe-skip]')?.addEventListener('click', async () => {
+      setDisabled(true);
+      if (message) message.textContent = 'Skipping this review…';
+      try {
+        await postJson(scopedProbeUrl(probeSkipTemplate, probe.id), {});
+        hideReviewWorkspace();
+        await refresh();
+      } catch (error) {
+        setDisabled(false);
+        if (message) message.textContent = 'I could not skip this review. Please try again.';
+      }
+    });
+  }
+
+  async function refreshProbeOffer(pendingProbe) {
+    if (pendingProbe) {
+      renderFormalProbe(pendingProbe);
+      return;
+    }
+    if (!probeOfferUrl) {
+      hideReviewWorkspace();
+      return;
+    }
+    try {
+      const response = await fetch(probeOfferUrl, { headers: { Accept: 'application/json' }, credentials: 'same-origin' });
+      const payload = await response.json();
+      latestProbeOffer = payload.probe_offer || null;
+      if (latestProbeOffer) renderProbeOffer(latestProbeOffer);
+      else hideReviewWorkspace();
+    } catch (error) {
+      console.warn('Probe offer refresh failed:', error);
+    }
+  }
+
+  const closeUserMenu = () => {
+    if (!userMenuButton || !userMenu) return;
+    userMenu.hidden = true;
+    userMenuButton.setAttribute('aria-expanded', 'false');
+  };
+
+  const masteryLevel = (value) => {
+    const score = Math.round(Math.max(0, Math.min(1, Number(value) || 0)) * 100);
+    if (score >= 75) return { label: 'Strong', css: 'strong' };
+    if (score >= 50) return { label: 'Building', css: 'building' };
+    return { label: 'Needs support', css: 'support' };
+  };
+
+  if (searchInput && goalItems.length) {
+    const filterGoals = () => {
+      const query = searchInput.value.trim().toLowerCase();
+      let visibleCount = 0;
+
+      goalItems.forEach(item => {
+        const searchText = (item.dataset.goalSearch || '').toLowerCase();
+        const isMatch = !query || searchText.includes(query);
+        item.hidden = !isMatch;
+        if (isMatch) visibleCount += 1;
+      });
+
+      if (searchEmpty) {
+        searchEmpty.hidden = !query || visibleCount > 0;
+      }
+    };
+
+    searchInput.addEventListener('input', filterGoals);
+    searchInput.addEventListener('keydown', event => {
+      if (event.key === 'Escape') {
+        searchInput.value = '';
+        filterGoals();
+        searchInput.blur();
+      }
+    });
+  }
+
+  if (sidebarToggle) {
+    sidebarToggle.addEventListener('click', () => {
+      const isCollapsed = document.body.classList.toggle('goal-sidebar-collapsed');
+      sidebarToggle.setAttribute('aria-expanded', String(!isCollapsed));
+      sidebarToggle.setAttribute(
+        'aria-label',
+        isCollapsed ? 'Expand learning goals' : 'Collapse learning goals'
+      );
+    });
+  }
+
+  if (userMenuButton && userMenu) {
+    userMenuButton.addEventListener('click', event => {
+      event.stopPropagation();
+      const isOpen = !userMenu.hidden;
+      userMenu.hidden = isOpen;
+      userMenuButton.setAttribute('aria-expanded', String(!isOpen));
+    });
+
+    document.addEventListener('click', event => {
+      if (!userMenu.contains(event.target) && !userMenuButton.contains(event.target)) {
+        closeUserMenu();
+      }
+    });
+
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape') {
+        closeUserMenu();
+      }
+    });
+  }
+
+  function drawChart(curves) {
+    const canvas = document.getElementById('dashboard-mastery-chart');
+    if (!canvas || !curves || typeof Chart === 'undefined') return;
+    latestCurves = curves;
+
+    const dashByDimension = {
+      facts: [],
+      procedures: [12, 7],
+      strategies: [5, 7],
+      rationales: [16, 6],
+    };
+    const orderedDims = ['rationales', 'strategies', 'procedures', 'facts'];
+    const datasets = orderedDims.map((dim, index) => ({
+      label: labels[dim],
+      data: (curves[dim] || []).map(point => ({
+        x: Number(point.x) || 0,
+        y: Math.max(0, Math.min(1, Number(point.y) || 0)),
+        timestamp: point.timestamp || '',
+        source: point.source || '',
+        concept_key: point.concept_key || '',
+        concept_label: point.concept_label || '',
+      })),
+      borderColor: colors[dim],
+      backgroundColor: colors[dim],
+      borderWidth: 3,
+      borderDash: dashByDimension[dim],
+      fill: false,
+      tension: 0.24,
+      pointRadius: 4,
+      pointHoverRadius: 7,
+      pointHitRadius: 12,
+      pointBorderWidth: 1.4,
+      pointBorderColor: '#ffffff',
+      parsing: false,
+      spanGaps: true,
+      order: index + 1,
+    }));
+
+    if (!masteryChart) {
+      masteryChart = new Chart(canvas.getContext('2d'), {
+        type: 'line',
+        data: { datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          animation: false,
+          normalized: true,
+          interaction: {
+            mode: 'nearest',
+            intersect: true,
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              mode: 'nearest',
+              intersect: true,
+              callbacks: {
+                title: items => {
+                  const x = items && items.length ? Number(items[0].parsed.x) : 0;
+                  return `Scored event #${Math.round(x || 0)}`;
+                },
+                label: item => `${item.dataset.label}: ${pct(item.parsed.y)}`,
+                afterLabel: item => {
+                  const raw = item.raw || {};
+                  const parts = [];
+                  if (raw.timestamp) {
+                    const date = new Date(raw.timestamp);
+                    if (!Number.isNaN(date.getTime())) {
+                      parts.push(date.toLocaleString());
+                    }
+                  }
+                  if (raw.source) parts.push(pretty(raw.source));
+                  if (raw.concept_label || raw.concept_key) parts.push(raw.concept_label || pretty(raw.concept_key));
+                  return parts.join(' · ');
+                },
+              },
+            },
+          },
+          scales: {
+            x: {
+              type: 'linear',
+              min: 1,
+              ticks: {
+                stepSize: 1,
+                precision: 0,
+                color: '#64748b',
+                callback: value => {
+                  const n = Number(value);
+                  return Number.isInteger(n) ? String(n) : '';
+                },
+              },
+              grid: { color: 'rgba(120, 132, 148, 0.22)' },
+              border: { color: 'rgba(20, 24, 31, 0.44)' },
+              title: {
+                display: true,
+                text: 'Scored events',
+                color: '#475569',
+                font: { family: 'Manrope, sans-serif', weight: '700', size: 12 },
+              },
+            },
+            y: {
+              type: 'linear',
+              min: 0,
+              max: 1,
+              ticks: {
+                stepSize: 0.25,
+                color: '#64748b',
+                callback: value => Number(value).toFixed(2),
+              },
+              grid: { color: 'rgba(120, 132, 148, 0.22)' },
+              border: { color: 'rgba(20, 24, 31, 0.44)' },
+              title: {
+                display: true,
+                text: 'Mastery score',
+                color: '#475569',
+                font: { family: 'Manrope, sans-serif', weight: '700', size: 12 },
+              },
+            },
+          },
+          onHover: (_event, active, chart) => {
+            chart.canvas.style.cursor = active && active.length ? 'crosshair' : 'default';
+          },
+        },
+      });
+      return;
+    }
+
+    masteryChart.data.datasets = datasets;
+    masteryChart.update('none');
+  }
+
+  function renderBars(state) {
+    const target = root.querySelector('[data-mastery-bars]');
+    if (!target) return;
+    const vector = state && state.mastery_vector ? state.mastery_vector : {};
+    const values = dimensions.map(dim => Math.max(0, Math.min(1, Number(vector[dim]) || 0)));
+    const average = values.length
+      ? values.reduce((sum, value) => sum + value, 0) / values.length
+      : 0;
+    const summaryLevel = masteryLevel(average);
+    const rows = dimensions.map(dim => {
+      const value = Math.max(0, Math.min(1, Number(vector[dim]) || 0));
+      const level = masteryLevel(value);
+      return `
+        <div class="dashboard-bar-row">
+          <div class="dashboard-bar-label">
+            <span>${labels[dim]}</span>
+            <div class="dashboard-bar-meta">
+              <strong>${pct(value)}</strong>
+              <b class="dashboard-bar-tag ${level.css}">${level.label}</b>
+            </div>
+          </div>
+          <div class="dashboard-bar-track">
+            <i style="width:${pct(value)}; background:${colors[dim]}"></i>
+          </div>
+        </div>
+      `;
+    }).join('');
+    target.innerHTML = `
+      <div class="dashboard-bars-summary">
+        Overall mastery: <strong>${pct(average)}</strong> · ${summaryLevel.label}
+      </div>
+      ${rows}
+    `;
+  }
+
+  function renderEventLogList(events) {
+    if (!eventLogList) return;
+    if (!Array.isArray(events) || !events.length) {
+      eventLogList.innerHTML = '<p class="dashboard-empty">No scored events yet.</p>';
+      return;
+    }
+    eventLogList.innerHTML = events.map(event => {
+      const date = event.created_at ? new Date(event.created_at) : null;
+      const when = date && !Number.isNaN(date.getTime()) ? date.toLocaleString() : 'Unknown time';
+      const source = pretty(event.source || 'event');
+      const concept = event.concept_label || pretty(event.concept_key || 'general');
+      return `
+        <div class="dashboard-log-item">
+          <div>
+            <strong>${escapeHtml(when)}</strong>
+            <span>${escapeHtml(source)} · ${escapeHtml(concept)}</span>
+          </div>
+          <b>${pct(event.accuracy_score)}</b>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function renderConceptList(states) {
+    if (!conceptList) return;
+    if (!Array.isArray(states) || !states.length) {
+      conceptList.innerHTML = '<p class="dashboard-empty">No concept patterns yet.</p>';
+      return;
+    }
+    conceptList.innerHTML = states.map(state => {
+      const conceptName = state.concept_label || pretty(state.concept_key || 'general');
+      const dimensionPatterns = state.dimension_curve_patterns || {};
+      const dimensionRows = dimensions.map(dim => `
+        <span>
+          <i style="background:${colors[dim]}"></i>
+          ${labels[dim]}: ${pretty(dimensionPatterns[dim] || 'insufficient_data')}
+        </span>
+      `).join('');
+      return `
+        <div class="dashboard-concept-pattern-item">
+          <div class="dashboard-concept-pattern-main">
+            <strong>${escapeHtml(conceptName)}</strong>
+            <span>${escapeHtml(pretty(state.weakest_dimension || 'unknown'))} weakest · ${Number(state.curve_evidence_count || 0)} evidence point${Number(state.curve_evidence_count || 0) === 1 ? '' : 's'} · quality ${pct(state.quality_score)}</span>
+          </div>
+          <b>${escapeHtml(pretty(state.curve_pattern || 'insufficient_data'))}</b>
+          <div class="dashboard-concept-dimensions">${dimensionRows}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function setEventModalOpen(open) {
+    if (!eventLogModal) return;
+    if (open) {
+      eventLogModal.hidden = false;
+      eventLogModal.setAttribute('aria-hidden', 'false');
+      document.body.classList.add('dashboard-modal-open');
+      renderEventLogList(latestEventLog);
+    } else {
+      eventLogModal.hidden = true;
+      eventLogModal.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('dashboard-modal-open');
+    }
+  }
+
+  function setConceptModalOpen(open) {
+    if (!conceptModal) return;
+    if (open) {
+      conceptModal.hidden = false;
+      conceptModal.setAttribute('aria-hidden', 'false');
+      document.body.classList.add('dashboard-modal-open');
+      renderConceptList(latestConceptStates);
+    } else {
+      conceptModal.hidden = true;
+      conceptModal.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('dashboard-modal-open');
+    }
+  }
+
+  if (eventLogOpenButton) {
+    eventLogOpenButton.addEventListener('click', () => setEventModalOpen(true));
+  }
+  eventLogCloseButtons.forEach(button => {
+    button.addEventListener('click', () => setEventModalOpen(false));
+  });
+  if (conceptOpenButton) {
+    conceptOpenButton.addEventListener('click', () => setConceptModalOpen(true));
+  }
+  conceptCloseButtons.forEach(button => {
+    button.addEventListener('click', () => setConceptModalOpen(false));
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && eventLogModal && !eventLogModal.hidden) {
+      setEventModalOpen(false);
+    }
+    if (event.key === 'Escape' && conceptModal && !conceptModal.hidden) {
+      setConceptModalOpen(false);
+    }
+  });
+
+  if (eventLogModal) {
+    eventLogModal.addEventListener('click', event => {
+      if (event.target && event.target.hasAttribute('data-event-log-close')) {
+        setEventModalOpen(false);
+      }
+    });
+  }
+
+  if (conceptModal) {
+    conceptModal.addEventListener('click', event => {
+      if (event.target && event.target.hasAttribute('data-concept-close')) {
+        setConceptModalOpen(false);
+      }
+    });
+  }
+
+  function render(payload) {
+    if (!payload || !payload.ok) return;
+    const state = payload.current_state || null;
+    const goalTrend = payload.goal_trend || {};
+    const policy = state && state.response_policy ? state.response_policy : {};
+    const eventCount = Object.values(payload.curves || {}).reduce((max, series) => Math.max(max, Array.isArray(series) ? series.length : 0), 0);
+    const goalReason = goalTrend && goalTrend.curve_reason ? goalTrend.curve_reason : {};
+
+    root.querySelector('[data-stat-tier]').textContent = state ? pretty(state.feedback_tier || 'consolidate') : 'Collecting Evidence';
+    root.querySelector('[data-stat-weakest]').textContent = state ? pretty(state.weakest_dimension || 'unknown') : 'Not enough data';
+    root.querySelector('[data-stat-quality]').textContent = state ? pct(state.quality_score) : '--';
+    root.querySelector('[data-stat-pattern]').textContent = goalTrend.curve_pattern ? pretty(goalTrend.curve_pattern) : 'Collecting evidence';
+    root.querySelector('[data-policy-title]').textContent = state ? `${pretty(state.feedback_tier || 'consolidate')} Intervention` : 'Waiting For Mastery State';
+    root.querySelector('[data-policy-copy]').textContent = state
+      ? `${policy.tier_policy || ''} ${policy.dimension_policy || ''}`.trim()
+      : 'Complete self-assessment or continue chat to build a stronger adaptive signal.';
+    root.querySelector('[data-curve-title]').textContent = goalTrend.curve_pattern ? pretty(goalTrend.curve_pattern) : 'Collecting evidence';
+    root.querySelector('[data-curve-meta]').textContent = state
+      ? `Confidence ${pct(goalTrend.curve_confidence || 0)} · ${Number(goalTrend.curve_evidence_count || 0)} eligible goal point${Number(goalTrend.curve_evidence_count || 0) === 1 ? '' : 's'}`
+      : 'Confidence -- · 0 evidence points';
+    root.querySelector('[data-curve-copy]').textContent = state
+      ? `Overall weakest dimension: ${pretty(goalTrend.weakest_dimension || 'unknown')}. Reason: ${pretty(goalReason.reason || 'not enough evidence')}.`
+      : 'Trend intervention starts only after enough scored evidence is available.';
+    latestConceptStates = Array.isArray(payload.concept_states) ? payload.concept_states : [];
+    const selectedConcept = state || latestConceptStates[0] || null;
+    root.querySelector('[data-concept-title]').textContent = selectedConcept ? (selectedConcept.concept_label || pretty(selectedConcept.concept_key || 'general')) : 'No concept selected';
+    root.querySelector('[data-concept-meta]').textContent = `${latestConceptStates.length} concept${latestConceptStates.length === 1 ? '' : 's'} tracked`;
+    root.querySelector('[data-concept-copy]').textContent = selectedConcept
+      ? `Selected concept pattern: ${pretty(selectedConcept.curve_pattern || 'insufficient_data')} · ${Number(selectedConcept.curve_evidence_count || 0)} evidence point${Number(selectedConcept.curve_evidence_count || 0) === 1 ? '' : 's'} · weakest ${pretty(selectedConcept.weakest_dimension || 'unknown')}.`
+      : 'Concept-level trends appear after mastery evidence is available.';
+    renderConceptList(latestConceptStates);
+    latestEventLog = Array.isArray(payload.event_log) ? payload.event_log : (Array.isArray(payload.recent_events) ? payload.recent_events : []);
+    if (eventLogOpenButton) {
+      const shownCount = latestEventLog.length || eventCount;
+      eventLogOpenButton.textContent = `${shownCount} scored event${shownCount === 1 ? '' : 's'}`;
+    }
+
+    drawChart(payload.curves || {});
+    renderBars(state);
+    renderEventLogList(latestEventLog);
+    refreshProbeOffer(payload.pending_probe || null);
+  }
+
+  async function refresh() {
+    if (!progressUrl) return;
+    try {
+      const res = await fetch(progressUrl, { headers: { Accept: 'application/json' }, credentials: 'same-origin' });
+      render(await res.json());
+    } catch (err) {
+      console.warn('Dashboard progress failed:', err);
+    }
+  }
+
+  window.addEventListener('resize', () => {
+    if (resizeRaf) {
+      window.cancelAnimationFrame(resizeRaf);
+    }
+    resizeRaf = window.requestAnimationFrame(() => {
+      if (masteryChart) masteryChart.resize();
+      resizeRaf = null;
+    });
+  });
+
+  refresh();
+  window.setInterval(refresh, 15000);
+})();
+</script>
+{% endblock %}

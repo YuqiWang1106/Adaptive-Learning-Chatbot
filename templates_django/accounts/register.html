@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% load static %}
+{% load formatting %}
+
+{% block title %}Create account - Learning Workflow Demo{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/login.css' %}">
+<link rel="stylesheet" href="{% static 'css/register.css' %}">
+{% endblock %}
+
+{% block navbar %}
+<nav class="auth-top-nav" role="navigation" aria-label="Auth Navigation">
+  <a class="auth-wordmark" href="{% url 'index' %}" aria-label="Learning Workflow Demo home">Learning Workflow Demo</a>
+  <div class="auth-nav-links" aria-label="Landing page sections">
+    <a href="{% url 'index' %}#about">About</a>
+    <a href="{% url 'index' %}#tutorial">Tutorial</a>
+    <a href="{% url 'index' %}#tech">Tech</a>
+    <a href="{% url 'index' %}#contact">Contact</a>
+  </div>
+  <a class="auth-nav-action" href="{% url 'login' %}">
+    <span>Login</span>
+    <span aria-hidden="true">-></span>
+  </a>
+</nav>
+{% endblock %}
+
+{% block content %}
+<main class="auth-page auth-page--register">
+  <section class="auth-panel" aria-labelledby="register-title">
+    <a class="auth-back" href="{% url 'index' %}" aria-label="Back to home">&larr;</a>
+    <div class="auth-panel-head">
+      <h1 id="register-title">
+        {% if selected_role == "teacher" %}Create teacher account{% elif selected_role == "student" %}Create student account{% else %}Create new account{% endif %}
+      </h1>
+    </div>
+
+    {% if not selected_role %}
+      <div class="auth-role-choice" aria-label="Choose account type">
+        <a class="auth-role-card" href="{% url 'register' %}?user_type=student">
+          <span>Student</span>
+          <strong>Set preferences and use the learning assistant.</strong>
+        </a>
+        <a class="auth-role-card" href="{% url 'register' %}?user_type=teacher">
+          <span>Teacher</span>
+          <strong>Create classes and view student learning reports.</strong>
+        </a>
+      </div>
+    {% else %}
+      {% if form.errors %}
+        <div class="alert alert-danger auth-errors" role="alert">
+          <strong>Fix these fields:</strong>
+          <ul>
+            {% for field, errors in form.errors.items %}
+              {% for error in errors %}
+                <li>{{ field|underscore_to_space|title }} — {{ error }}</li>
+              {% endfor %}
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+
+      <form class="auth-form auth-form--register" method="POST" action="{% url 'register' %}" aria-label="Registration Form">
+        {% csrf_token %}
+        <input type="hidden" name="user_type" value="{{ selected_role }}">
+
+        {% if invitation %}
+          <div class="auth-invite-notice auth-field--full" role="status">
+            <strong>Joining a class?</strong>
+            <span>Create a student account to accept {% firstof invitation.classroom.name invitation.classroom.title "this invitation" %}.</span>
+          </div>
+        {% endif %}
+
+        <div class="auth-field">
+          <label for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
+          {{ form.username }}
+        </div>
+
+        <div class="auth-field auth-field--full">
+          <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+          {{ form.email }}
+        </div>
+
+        <div class="auth-field">
+          <label for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>
+          {{ form.password }}
+        </div>
+
+        <div class="auth-field">
+          <label for="{{ form.confirm_password.id_for_label }}">{{ form.confirm_password.label }}</label>
+          {{ form.confirm_password }}
+        </div>
+
+        <button type="submit" class="auth-submit">Create account</button>
+      </form>
+
+      <p class="auth-switch">
+        Already have an account? <a href="{% url 'login' %}?user_type={{ selected_role }}">Log in</a> here.
+      </p>
+      <p class="auth-switch auth-switch--muted">
+        Wrong entrance? <a href="{% url 'register' %}">Choose again.</a>
+      </p>
+    {% endif %}
+
+    <p class="auth-terms">Internal beta: do not enter sensitive or confidential information.</p>
+  </section>
+</main>
+{% endblock %}

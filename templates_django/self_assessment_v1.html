@@ -1,0 +1,423 @@
+{% extends "base.html" %}
+{% load static %}
+{% load formatting %}
+
+{% block title %}Self-Assessment Studio - Learning Workflow Demo{% endblock %}
+
+{% block extra_css %}
+
+
+
+<link rel="stylesheet" href="{% static 'css/learning_goal.css' %}">
+<link rel="stylesheet" href="{% static 'css/self_assessment.css' %}">
+{% endblock %}
+
+{% block navbar %}
+<nav class="lg-top-nav" aria-label="Self-assessment navigation">
+  <div class="lg-brand" aria-label="Learning Workflow Demo">
+    <svg class="lg-wordmark" viewBox="0 0 164 46" aria-hidden="true" focusable="false">
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="6.5">
+        <path d="M12 34L18 13L30 28L42 13L48 34" />
+        <path d="M63 13H88" />
+        <path d="M63 23H83" />
+        <path d="M63 34H88" />
+        <path d="M100 13H128" />
+        <path d="M114 13V34" />
+        <path d="M139 13L151 24L163 13" />
+        <path d="M151 24V34" />
+      </g>
+    </svg>
+  </div>
+
+  <div class="lg-nav-search" role="search">
+    <label class="visually-hidden" for="lg-nav-search-input">Search learning goals</label>
+    <input id="lg-nav-search-input" type="search" placeholder="Search" autocomplete="off">
+    <i class="bi bi-search" aria-hidden="true"></i>
+  </div>
+
+  <div class="lg-nav-actions">
+    {% if learning_goal_id %}
+    <button type="button" class="lg-material-btn" data-material-modal-open aria-label="Upload course materials">
+      <i class="bi bi-upload" aria-hidden="true"></i>
+      <span>Upload</span>
+    </button>
+    {% endif %}
+    <div class="lg-user-menu">
+      <button type="button" class="lg-user-chip" aria-label="Account menu" aria-haspopup="menu" aria-expanded="false">
+        <i class="bi bi-person-circle" aria-hidden="true"></i>
+        <span>{{ user.username }}</span>
+      </button>
+      <div class="lg-user-dropdown" role="menu" hidden>
+        <a class="lg-user-dropdown-item" href="{% url 'logout' %}" role="menuitem">Log out</a>
+      </div>
+    </div>
+  </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="goal-app-shell sa-app-shell{% if from_loading %} sa-enter-from-loading{% endif %}">
+  {% include "learning_goal/sidebar.html" %}
+
+  <div class="goal-main" aria-label="Self-assessment workspace">
+    <section class="sa-shell">
+      <div class="sa-grid">
+        <article class="sa-panel sa-panel-example">
+          <div class="sa-panel-hero">
+            <span>Example</span>
+          </div>
+          <div class="sa-example-status" aria-live="polite">
+            <span class="sa-example-label" data-example-label>Problem example</span>
+            <span class="sa-example-progress"><span data-example-current>1</span> / 5</span>
+          </div>
+          <div class="sa-panel-body sa-example-body">
+            {% with example_problem=self_assessment_guides.context example_facts=self_assessment_guides.dimensions.facts.guidance example_strategies=self_assessment_guides.dimensions.strategies.guidance example_procedures=self_assessment_guides.dimensions.procedures.guidance example_rationales=self_assessment_guides.dimensions.rationales.guidance %}
+              <section class="sa-example-panel is-active" data-example-panel="0">
+                {% if example_problem %}
+                  <p>{{ example_problem }}</p>
+                {% else %}
+                  <p>Example self-assessment text will appear here once a domain and branch are selected.</p>
+                {% endif %}
+              </section>
+              <section class="sa-example-panel" data-example-panel="1" hidden>
+                {% if example_facts %}
+                  <p>{{ example_facts }}</p>
+                {% else %}
+                  <p>Facts guidance will appear here once the example is generated.</p>
+                {% endif %}
+              </section>
+              <section class="sa-example-panel" data-example-panel="2" hidden>
+                {% if example_strategies %}
+                  <p>{{ example_strategies }}</p>
+                {% else %}
+                  <p>Strategies guidance will appear here once the example is generated.</p>
+                {% endif %}
+              </section>
+              <section class="sa-example-panel" data-example-panel="3" hidden>
+                {% if example_procedures %}
+                  <p>{{ example_procedures }}</p>
+                {% else %}
+                  <p>Procedures guidance will appear here once the example is generated.</p>
+                {% endif %}
+              </section>
+              <section class="sa-example-panel" data-example-panel="4" hidden>
+                {% if example_rationales %}
+                  <p>{{ example_rationales }}</p>
+                {% else %}
+                  <p>Rationales guidance will appear here once the example is generated.</p>
+                {% endif %}
+              </section>
+            {% endwith %}
+          </div>
+        </article>
+
+        <article class="sa-panel sa-panel-form">
+          <div class="sa-panel-hero">
+            <span>Your Assessment</span>
+          </div>
+
+          <div class="sa-stepper" role="tablist" aria-label="Self-assessment sections">
+            <button type="button" class="sa-step-tab is-active" role="tab" aria-selected="true" data-step-index="0">Problem</button>
+            <button type="button" class="sa-step-tab" role="tab" aria-selected="false" data-step-index="1">Facts</button>
+            <button type="button" class="sa-step-tab" role="tab" aria-selected="false" data-step-index="2">Strategies</button>
+            <button type="button" class="sa-step-tab" role="tab" aria-selected="false" data-step-index="3">Procedures</button>
+            <button type="button" class="sa-step-tab" role="tab" aria-selected="false" data-step-index="4">Rationales</button>
+          </div>
+
+          <form method="post" class="sa-form">
+            {% csrf_token %}
+            {% if learning_goal_id %}
+              <input type="hidden" name="learning_goal_id" value="{{ learning_goal_id }}">
+            {% endif %}
+
+            <section class="sa-step-panel is-active" data-step-panel="0">
+              <div class="sa-field">
+                <label for="student_id">Student ID</label>
+                <input id="student_id" type="text" name="student_id" value="{{ user.username }}" readonly>
+              </div>
+
+              <div class="sa-field">
+                <label for="problem">Problem</label>
+                <textarea id="problem" name="problem" placeholder="What problem are you assessing right now?"></textarea>
+              </div>
+            </section>
+
+            <section class="sa-step-panel" data-step-panel="1" hidden>
+              <div class="sa-field-heading">Facts</div>
+              <div class="sa-field">
+                <label for="facts_statement">Statement</label>
+                <textarea id="facts_statement" name="facts_statement" placeholder="What do you know for sure?"></textarea>
+              </div>
+              <div class="sa-field">
+                <label for="facts_uncertainties">Uncertainties</label>
+                <textarea id="facts_uncertainties" name="facts_uncertainties" placeholder="Where are you unsure? (optional)"></textarea>
+              </div>
+            </section>
+
+            <section class="sa-step-panel" data-step-panel="2" hidden>
+              <div class="sa-field-heading">Strategies</div>
+              <div class="sa-field">
+                <label for="strategies_statement">Statement</label>
+                <textarea id="strategies_statement" name="strategies_statement" placeholder="Techniques or plans you rely on"></textarea>
+              </div>
+              <div class="sa-field">
+                <label for="strategies_uncertainties">Uncertainties</label>
+                <textarea id="strategies_uncertainties" name="strategies_uncertainties" placeholder="Strategy gaps or questions (optional)"></textarea>
+              </div>
+            </section>
+
+            <section class="sa-step-panel" data-step-panel="3" hidden>
+              <div class="sa-field-heading">Procedures</div>
+              <div class="sa-field">
+                <label for="procedures_statement">Statement</label>
+                <textarea id="procedures_statement" name="procedures_statement" placeholder="Steps that feel reliable"></textarea>
+              </div>
+              <div class="sa-field">
+                <label for="procedures_uncertainties">Uncertainties</label>
+                <textarea id="procedures_uncertainties" name="procedures_uncertainties" placeholder="Steps you’re unsure about (optional)"></textarea>
+              </div>
+            </section>
+
+            <section class="sa-step-panel" data-step-panel="4" hidden>
+              <div class="sa-field-heading">Rationales</div>
+              <div class="sa-field">
+                <label for="rationales_statement">Statement</label>
+                <textarea id="rationales_statement" name="rationales_statement" placeholder="Explain why your approach works"></textarea>
+              </div>
+              <div class="sa-field">
+                <label for="rationales_uncertainties">Uncertainties</label>
+                <textarea id="rationales_uncertainties" name="rationales_uncertainties" placeholder="Where does the reasoning break down? (optional)"></textarea>
+              </div>
+            </section>
+
+            <div class="sa-actions">
+              <button class="sa-step-btn secondary" type="button" data-step-prev disabled>Back</button>
+              <span class="sa-step-count"><span id="sa-step-current">1</span> / 5</span>
+              <button class="sa-step-btn primary" type="button" data-step-next>Next</button>
+              <button class="sa-btn-primary" type="submit" data-step-submit hidden>Submit self-assessment</button>
+            </div>
+          </form>
+        </article>
+      </div>
+    </section>
+  </div>
+</div>
+
+{% if learning_goal_id %}
+  {% include "learning_goal/material_upload_modal.html" %}
+{% endif %}
+
+<div class="sa-confirm-modal" data-submit-confirm-modal hidden>
+  <div class="sa-confirm-backdrop" data-submit-confirm-cancel></div>
+  <section class="sa-confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="sa-confirm-title">
+    <p class="sa-confirm-kicker">Ready to submit?</p>
+    <h2 id="sa-confirm-title">Confirm your assessment</h2>
+    <p class="sa-confirm-copy">Submit only when you do not need to make more changes.</p>
+    <div class="sa-confirm-actions">
+      <button class="sa-confirm-btn secondary" type="button" data-submit-confirm-cancel>Keep editing</button>
+      <button class="sa-confirm-btn primary" type="button" data-submit-confirm-accept>Submit assessment</button>
+    </div>
+  </section>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    document.body.classList.add('goal-sidebar-layout');
+    const enteringShell = document.querySelector('.sa-enter-from-loading');
+    if (enteringShell) {
+      requestAnimationFrame(() => {
+        enteringShell.classList.add('is-ready');
+      });
+    }
+  });
+
+  (() => {
+    const searchInput = document.getElementById('lg-nav-search-input');
+    const goalItems = Array.from(document.querySelectorAll('.goal-item[data-goal-search]'));
+    const searchEmpty = document.querySelector('.goal-search-empty');
+    const sidebarToggle = document.querySelector('.goal-sidebar-toggle');
+    const userMenuButton = document.querySelector('.lg-user-chip');
+    const userMenu = document.querySelector('.lg-user-dropdown');
+
+    const closeUserMenu = () => {
+      if (!userMenuButton || !userMenu) return;
+      userMenu.hidden = true;
+      userMenuButton.setAttribute('aria-expanded', 'false');
+    };
+
+    if (userMenuButton && userMenu) {
+      userMenuButton.addEventListener('click', event => {
+        event.stopPropagation();
+        const isOpen = !userMenu.hidden;
+        userMenu.hidden = isOpen;
+        userMenuButton.setAttribute('aria-expanded', String(!isOpen));
+      });
+
+      document.addEventListener('click', event => {
+        if (!userMenu.contains(event.target) && !userMenuButton.contains(event.target)) {
+          closeUserMenu();
+        }
+      });
+
+      document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') {
+          closeUserMenu();
+        }
+      });
+    }
+
+    if (searchInput && goalItems.length) {
+      const filterGoals = () => {
+        const query = searchInput.value.trim().toLowerCase();
+        let visibleCount = 0;
+
+        goalItems.forEach(item => {
+          const searchText = (item.dataset.goalSearch || '').toLowerCase();
+          const isMatch = !query || searchText.includes(query);
+          item.hidden = !isMatch;
+          if (isMatch) {
+            visibleCount += 1;
+          }
+        });
+
+        if (searchEmpty) {
+          searchEmpty.hidden = !query || visibleCount > 0;
+        }
+      };
+
+      searchInput.addEventListener('input', filterGoals);
+      searchInput.addEventListener('keydown', event => {
+        if (event.key === 'Escape') {
+          searchInput.value = '';
+          filterGoals();
+          searchInput.blur();
+        }
+      });
+    }
+
+    if (sidebarToggle) {
+      sidebarToggle.addEventListener('click', () => {
+        const isCollapsed = document.body.classList.toggle('goal-sidebar-collapsed');
+        sidebarToggle.setAttribute('aria-expanded', String(!isCollapsed));
+        sidebarToggle.setAttribute(
+          'aria-label',
+          isCollapsed ? 'Expand learning goals' : 'Collapse learning goals'
+        );
+      });
+    }
+
+    const stepTabs = Array.from(document.querySelectorAll('.sa-step-tab'));
+    const stepPanels = Array.from(document.querySelectorAll('.sa-step-panel'));
+    const examplePanels = Array.from(document.querySelectorAll('.sa-example-panel'));
+    const prevBtn = document.querySelector('[data-step-prev]');
+    const nextBtn = document.querySelector('[data-step-next]');
+    const submitBtn = document.querySelector('[data-step-submit]');
+    const assessmentForm = document.querySelector('.sa-form');
+    const confirmModal = document.querySelector('[data-submit-confirm-modal]');
+    const confirmAccept = document.querySelector('[data-submit-confirm-accept]');
+    const confirmCancelButtons = Array.from(document.querySelectorAll('[data-submit-confirm-cancel]'));
+    const currentLabel = document.getElementById('sa-step-current');
+    const exampleLabel = document.querySelector('[data-example-label]');
+    const exampleCurrentLabel = document.querySelector('[data-example-current]');
+    const stepNames = ['Problem', 'Facts', 'Strategies', 'Procedures', 'Rationales'];
+    let currentStep = 0;
+
+    const showStep = index => {
+      if (!stepPanels.length) return;
+      currentStep = Math.max(0, Math.min(index, stepPanels.length - 1));
+      const isLastStep = currentStep === stepPanels.length - 1;
+
+      stepPanels.forEach((panel, panelIndex) => {
+        const isActive = panelIndex === currentStep;
+        panel.hidden = !isActive;
+        panel.classList.toggle('is-active', isActive);
+      });
+
+      examplePanels.forEach((panel, panelIndex) => {
+        const isActive = panelIndex === currentStep;
+        panel.hidden = !isActive;
+        panel.classList.toggle('is-active', isActive);
+      });
+
+      stepTabs.forEach((tab, tabIndex) => {
+        const isActive = tabIndex === currentStep;
+        tab.classList.toggle('is-active', isActive);
+        tab.setAttribute('aria-selected', String(isActive));
+        tab.tabIndex = isActive ? 0 : -1;
+      });
+
+      if (prevBtn) prevBtn.disabled = currentStep === 0;
+      if (nextBtn) nextBtn.hidden = isLastStep;
+      if (submitBtn) submitBtn.hidden = !isLastStep;
+      if (currentLabel) currentLabel.textContent = String(currentStep + 1);
+      if (exampleCurrentLabel) exampleCurrentLabel.textContent = String(currentStep + 1);
+      if (exampleLabel) exampleLabel.textContent = `${stepNames[currentStep] || 'Current'} example`;
+    };
+
+    stepTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        showStep(Number(tab.dataset.stepIndex || 0));
+      });
+    });
+
+    if (prevBtn) {
+      prevBtn.addEventListener('click', () => showStep(currentStep - 1));
+    }
+
+    if (nextBtn) {
+      nextBtn.addEventListener('click', () => showStep(currentStep + 1));
+    }
+
+    const openConfirmModal = () => {
+      if (!confirmModal) return;
+      confirmModal.hidden = false;
+      document.body.classList.add('sa-confirm-open');
+      requestAnimationFrame(() => {
+        confirmModal.classList.add('is-visible');
+        if (confirmAccept) confirmAccept.focus();
+      });
+    };
+
+    const closeConfirmModal = () => {
+      if (!confirmModal) return;
+      confirmModal.classList.remove('is-visible');
+      document.body.classList.remove('sa-confirm-open');
+      window.setTimeout(() => {
+        confirmModal.hidden = true;
+        if (submitBtn) submitBtn.focus();
+      }, 180);
+    };
+
+    if (assessmentForm) {
+      assessmentForm.addEventListener('submit', event => {
+        if (assessmentForm.dataset.confirmed === 'true') return;
+        event.preventDefault();
+        openConfirmModal();
+      });
+    }
+
+    if (confirmAccept && assessmentForm) {
+      confirmAccept.addEventListener('click', () => {
+        assessmentForm.dataset.confirmed = 'true';
+        assessmentForm.submit();
+      });
+    }
+
+    confirmCancelButtons.forEach(button => {
+      button.addEventListener('click', closeConfirmModal);
+    });
+
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && confirmModal && !confirmModal.hidden) {
+        closeConfirmModal();
+      }
+    });
+
+    showStep(0);
+  })();
+</script>
+{% endblock %}

@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Log in - Learning Workflow Demo{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/login.css' %}">
+{% endblock %}
+
+{% block navbar %}
+<nav class="auth-top-nav" role="navigation" aria-label="Auth Navigation">
+  <a class="auth-wordmark" href="{% url 'index' %}" aria-label="Learning Workflow Demo home">Learning Workflow Demo</a>
+  <div class="auth-nav-links" aria-label="Landing page sections">
+    <a href="{% url 'index' %}#about">About</a>
+    <a href="{% url 'index' %}#tutorial">Tutorial</a>
+    <a href="{% url 'index' %}#tech">Tech</a>
+    <a href="{% url 'index' %}#contact">Contact</a>
+  </div>
+  <a class="auth-nav-action" href="{% url 'login' %}">
+    <span>Login</span>
+    <span aria-hidden="true">-></span>
+  </a>
+</nav>
+{% endblock %}
+
+{% block content %}
+<main class="auth-page auth-page--login">
+  <section class="auth-panel" aria-labelledby="login-title">
+    <a class="auth-back" href="{% url 'index' %}" aria-label="Back to home">&larr;</a>
+    <div class="auth-panel-head">
+      <h1 id="login-title">
+        {% if selected_role == "teacher" %}Teacher log in{% elif selected_role == "student" %}Student log in{% else %}Log in{% endif %}
+      </h1>
+    </div>
+
+    {% if not selected_role %}
+      <div class="auth-role-choice" aria-label="Choose account type">
+        <a class="auth-role-card" href="{% url 'login' %}?user_type=student">
+          <span>Student</span>
+          <strong>Continue learning, chat, and view class invitations.</strong>
+        </a>
+        <a class="auth-role-card" href="{% url 'login' %}?user_type=teacher">
+          <span>Teacher</span>
+          <strong>Manage classes, invitations, and student reports.</strong>
+        </a>
+      </div>
+    {% else %}
+      {% if messages %}
+        <div class="auth-alert-stack">
+          {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+              {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <form class="auth-form" method="POST" action="{% url 'login' %}" aria-label="Login Form" novalidate>
+        {% csrf_token %}
+        <input type="hidden" name="user_type" value="{{ selected_role }}">
+
+        {% if invitation %}
+          <div class="auth-invite-notice" role="status">
+            <strong>Class invitation ready</strong>
+            <span>Log in as a student to join {% firstof invitation.classroom.name invitation.classroom.title "this class" %}.</span>
+          </div>
+        {% elif pending_invitations %}
+          <div class="auth-invite-notice" role="status">
+            <strong>{{ pending_invitations|length }} pending invitation{{ pending_invitations|length|pluralize }}</strong>
+            <span>Use your student account to review class access.</span>
+          </div>
+        {% endif %}
+
+        <div class="auth-field">
+          <label for="username">Username</label>
+          <input type="text" name="username" id="username" required autocomplete="username">
+        </div>
+
+        <div class="auth-field">
+          <label for="password">Password</label>
+          <div class="auth-password-wrap">
+            <input type="password" name="password" id="password" required autocomplete="current-password">
+            <button id="password-view-toggle" type="button" aria-label="Toggle password visibility">
+              <span id="password-view-icon" aria-hidden="true">Show</span>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="auth-submit">Log in</button>
+      </form>
+
+      <p class="auth-switch">
+        Don't have an account? <a href="{% url 'register' %}?user_type={{ selected_role }}">Create an account.</a>
+      </p>
+      <p class="auth-switch auth-switch--muted">
+        Wrong entrance? <a href="{% url 'login' %}">Choose again.</a>
+      </p>
+    {% endif %}
+
+    <p class="auth-terms">Internal beta: do not enter sensitive or confidential information.</p>
+  </section>
+</main>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const toggle = document.getElementById('password-view-toggle');
+    const passwordField = document.getElementById('password');
+    const passwordIcon = document.getElementById('password-view-icon');
+
+    if (!toggle || !passwordField || !passwordIcon) {
+      return;
+    }
+
+    toggle.addEventListener('click', function () {
+      const isHidden = passwordField.type === 'password';
+      passwordField.type = isHidden ? 'text' : 'password';
+      passwordIcon.textContent = isHidden ? 'Hide' : 'Show';
+    });
+  });
+</script>
+{% endblock %}

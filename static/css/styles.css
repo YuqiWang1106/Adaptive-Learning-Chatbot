@@ -1,0 +1,707 @@
+/* static/css/styles.css */
+
+/* Define CSS variables for colors */
+:root {
+    --background-color: #ffffff;
+    --text-color: #212529;
+    --link-color: #5a5a5a;
+    --link-hover-color: #7a7a7a;
+    --navbar-background-color: #343a40; /* Dark banner in light mode */
+    --navbar-text-color: #ffffff;
+    --card-background-color: #f8f9fa;
+    --card-text-color: #212529;
+    --card-border-color: #ced4da;
+    --button-background-color: #5a5a5a;
+    --button-border-color: #5a5a5a;
+    --button-text-color: #ffffff;
+    --form-control-background-color: #ffffff;
+    --form-control-text-color: #212529;
+    --form-control-border-color: #ced4da;
+    --footer-background-color: #e9ecef;
+    --footer-text-color: #6c757d;
+    --alert-background-color: #f8f9fa;
+    --alert-text-color: #212529;
+    --alert-border-color: #ced4da;
+    --table-text-color: #212529;
+    --table-header-background-color: #e9ecef;
+    --table-header-text-color: #212529;
+    --table-header-border-color: #ced4da;
+    --icon-color: #f8f9fa;
+}
+
+body {
+    background-color: var(--background-color);
+    color: var(--text-color);
+    font-family: 'Roboto', sans-serif;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+a {
+    color: var(--link-color);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+a:hover {
+    color: var(--link-hover-color);
+}
+
+.navbar {
+    background-color: var(--navbar-background-color);
+    border-bottom: 1px solid #454d55;
+    transition: background-color 0.3s ease;
+}
+
+.navbar .navbar-brand,
+.navbar .nav-link {
+    color: var(--navbar-text-color);
+}
+
+.navbar .navbar-brand:hover,
+.navbar .nav-link:hover {
+    color: #e0e0e0;
+}
+
+.banner {
+    background-color: var(--navbar-background-color);
+    color: var(--navbar-text-color);
+    padding: 100px 20px;
+    text-align: center;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.btn-primary {
+    background-color: var(--button-background-color);
+    border-color: var(--button-border-color);
+    color: var(--button-text-color);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.btn-primary:hover {
+    background-color: #6c757d;
+    border-color: #6c757d;
+}
+
+.btn-secondary {
+    background-color: var(--button-background-color);
+    border-color: var(--button-border-color);
+    color: var(--button-text-color);
+}
+
+.btn-secondary:hover {
+    background-color: #6c757d;
+    border-color: #6c757d;
+}
+
+.card {
+    background-color: var(--card-background-color);
+    color: var(--card-text-color);
+    border: 1px solid var(--card-border-color);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.card-header,
+.card-footer {
+    background-color: var(--card-background-color);
+    color: var(--card-text-color);
+    border-color: var(--card-border-color);
+}
+
+.card-header.bg-primary,
+.card-header.bg-success {
+    background-color: var(--card-background-color) !important;
+    color: var(--card-text-color) !important;
+}
+
+.form-control,
+.form-select {
+    background-color: var(--form-control-background-color);
+    color: var(--form-control-text-color);
+    border: 1px solid var(--form-control-border-color);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.form-control::placeholder,
+.form-select::placeholder {
+    color: #6c757d;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--button-border-color);
+    box-shadow: none;
+}
+
+.form-check-input {
+    background-color: var(--form-control-background-color);
+    border-color: #6c757d;
+}
+
+.form-check-label {
+    color: var(--text-color);
+}
+
+.footer {
+    background-color: transparent; /*var(--footer-background-color);*/
+    color: var(--footer-text-color);
+    padding: 20px 0;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    width: 100%;
+    position: relative;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.alert {
+    border-radius: 0.25rem;
+    background-color: var(--alert-background-color);
+    color: var(--alert-text-color);
+    border: 1px solid var(--alert-border-color);
+}
+
+.spinner-border {
+    color: var(--button-border-color);
+}
+
+.table {
+    color: var(--table-text-color);
+}
+
+.table thead th {
+    background-color: var(--table-header-background-color);
+    color: var(--table-header-text-color);
+    border-bottom: 2px solid var(--table-header-border-color);
+}
+
+.pagination .page-link {
+    color: var(--link-color);
+}
+
+.pagination .page-link:hover {
+    color: var(--link-hover-color);
+}
+
+.pagination .page-item.active .page-link {
+    background-color: var(--button-background-color);
+    border-color: var(--button-border-color);
+    color: var(--button-text-color);
+}
+
+.form-control:focus {
+    border-color: var(--button-border-color);
+    box-shadow: none;
+}
+
+.btn:hover {
+    box-shadow: none;
+}
+
+.team-image {
+    width: 150px;
+    height: 150px;
+    background-size: cover;
+    background-position: center;
+    border-radius: 50%;
+    border: 3px solid #ffffff;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.team-image:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+@media (max-width: 576px) {
+    .team-image {
+        width: 100px;
+        height: 100px;
+    }
+
+    .banner {
+        padding: 60px 20px;
+    }
+
+    .banner h1 {
+        font-size: 2em;
+    }
+
+    .banner p {
+        font-size: 1.2em;
+    }
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: inherit;
+}
+
+.list-group-item {
+    background-color: var(--card-background-color);
+    color: var(--text-color);
+    border: 1px solid var(--card-border-color);
+}
+
+.modal-content {
+    background-color: var(--card-background-color);
+    color: var(--text-color);
+}
+
+.dropdown-menu {
+    background-color: var(--card-background-color);
+    color: var(--text-color);
+}
+
+.alert-dismissible .btn-close {
+    filter: invert(0);
+}
+
+/* Dark mode variables */
+body.dark-mode {
+    --background-color: #121212;
+    --text-color: #ffffff;
+    --link-color: #cccccc;
+    --link-hover-color: #ffffff;
+    --navbar-background-color: #343a40;
+    --navbar-text-color: #ffffff;
+    --card-background-color: #1e1e1e;
+    --card-text-color: #ffffff;
+    --card-border-color: #333333;
+    --button-background-color: #1e1e1e;
+    --button-border-color: #cccccc;
+    --button-text-color: #ffffff;
+    --form-control-background-color: #2a2a2a;
+    --form-control-text-color: #ffffff;
+    --form-control-border-color: #555555;
+    --footer-background-color: #1e1e1e;
+    --footer-text-color: #9e9e9e;
+    --alert-background-color: #2a2a2a;
+    --alert-text-color: #ffffff;
+    --alert-border-color: #444444;
+    --table-text-color: #ffffff;
+    --table-header-background-color: #2a2a2a;
+    --table-header-text-color: #ffffff;
+    --table-header-border-color: #444444;
+    --icon-color: #ffffff;
+}
+
+body.dark-mode .alert-dismissible .btn-close {
+    filter: invert(1);
+}
+
+.navbar-toggler-icon {
+    color: var(--icon-color);
+}
+
+#theme-toggle i {
+    color: var(--icon-color);
+}
+
+/* Adjusting buttons in dark mode */
+body.dark-mode .btn-primary,
+body.dark-mode .btn-success {
+    background-color: var(--button-background-color);
+    border-color: var(--button-border-color);
+    color: var(--button-text-color);
+}
+
+body.dark-mode .btn-primary:hover,
+body.dark-mode .btn-success:hover {
+    background-color: #2a2a2a;
+    border-color: #dddddd;
+}
+
+body.dark-mode .btn-secondary {
+    background-color: var(--button-background-color);
+    border-color: var(--button-border-color);
+    color: var(--button-text-color);
+}
+
+body.dark-mode .btn-secondary:hover {
+    background-color: #2a2a2a;
+    border-color: #dddddd;
+}
+
+/* Adjust the card header in dark mode */
+.card-header {
+    background-color: var(--card-background-color);
+    color: var(--text-color);
+    border-bottom: 1px solid var(--card-border-color);
+}
+
+.card-header.bg-primary,
+.card-header.bg-success {
+    background-color: var(--card-background-color) !important;
+    color: var(--text-color) !important;
+}
+
+body.dark-mode .card-header {
+    background-color: var(--card-background-color);
+    color: var(--text-color);
+    border-bottom: 1px solid var(--card-border-color);
+}
+
+/* Adjust table text color in dark mode */
+body.dark-mode .table {
+    color: var(--table-text-color);
+}
+
+body.dark-mode .table td,
+body.dark-mode .table th {
+    border-color: var(--table-header-border-color);
+}
+
+body.dark-mode .table thead th {
+    background-color: var(--table-header-background-color);
+    color: var(--table-header-text-color);
+    border-bottom: 2px solid var(--table-header-border-color);
+}
+
+/* Ensure small text, placeholders, and form text are visible in dark mode */
+.form-text {
+    color: #6c757d;
+}
+
+body.dark-mode .form-text {
+    color: #cccccc;
+}
+
+.form-control::placeholder,
+.form-select::placeholder {
+    color: #6c757d;
+}
+
+body.dark-mode .form-control::placeholder,
+body.dark-mode .form-select::placeholder {
+    color: #cccccc;
+}
+
+/* Adjust links in dark mode */
+body.dark-mode a {
+    color: var(--link-color);
+}
+
+body.dark-mode a:hover {
+    color: var(--link-hover-color);
+}
+
+/* Adjust icon color */
+#theme-icon {
+    color: var(--icon-color);
+}
+
+/* Adjust the "Back to Home" button to match "Update Preferences" button */
+.btn-custom {
+    background-color: var(--button-background-color);
+    border-color: var(--button-border-color);
+    color: var(--button-text-color);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.btn-custom:hover {
+    background-color: #6c757d;
+    border-color: #6c757d;
+}
+
+body.dark-mode history.card-header {
+    background-color: var(--button-background-color);
+    border-color: var(--button-border-color);
+    color: var(--button-text-color);
+}
+
+body.dark-mode history.card-body {
+    background-color: var(--button-background-color);
+    border-color: var(--button-border-color);
+    color: var(--button-text-color);
+}
+
+/*body.dark-mode history.text-muted {*/
+/*}*/
+
+body.dark-mode .btn-custom {
+    background-color: var(--button-background-color);
+    border-color: var(--button-border-color);
+    color: var(--button-text-color);
+}
+
+body.dark-mode .btn-custom:hover {
+    background-color: #2a2a2a;
+    border-color: #dddddd;
+}
+
+/* Adjust the spinner color */
+.spinner-border {
+    color: var(--button-background-color);
+}
+
+body.dark-mode .spinner-border {
+    color: var(--button-border-color);
+}
+
+/* Ensure all table cell text is light gray in dark mode */
+body.dark-mode .table tbody tr td,
+body.dark-mode .table tbody tr th {
+    color: var(--text-color) !important; /* Light gray color for better readability */
+    background-color: var(--card-background-color) !important;
+}
+
+/* Override any specific classes that might set text color to black */
+body.dark-mode .table tbody tr td.text-black,
+body.dark-mode .table tbody tr th.text-black {
+    color: var(--text-color) !important; /* Ensures even cells with 'text-black' class are light */
+}
+
+/* Headings in Dark Mode */
+body.dark-mode h1,
+body.dark-mode h2,
+body.dark-mode h3,
+body.dark-mode h4,
+body.dark-mode h5,
+body.dark-mode h6 {
+    color: #ffffff; /* White headings */
+}
+
+/* Placeholder Text in Dark Mode */
+body.dark-mode .form-control::placeholder,
+body.dark-mode .form-select::placeholder {
+    color: #cccccc; /* Light gray placeholders */
+}
+
+/* Form Text in Dark Mode */
+body.dark-mode .form-text {
+    color: #cccccc; /* Light gray form hints */
+}
+
+.table {
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    transition: background-color 0.3s ease;
+}
+
+.badge {
+    font-size: 0.9rem;
+    padding: 0.4em 0.75em;
+    margin: 2px;
+}
+
+.table-dark th {
+    background-color: #343a40 !important;
+    color: white !important;
+}
+
+.dark-mode pre {
+    background-color: #3a3a3a !important;
+}
+
+.dark-mode .accordion-button {
+    color: #ffffff !important;
+    background-color: #3a3a3a !important;
+}
+
+.dark-mode .accordion-body {
+    color: #ffffff !important;
+    background-color: #3a3a3a !important;
+}
+
+.dark-mode .table-dark th {
+    background-color: #212529 !important;
+}
+
+.dark-mode .table-hover tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.weight-metric {
+    transition: width 0.3s ease;
+}
+
+.card-header .bi {
+    opacity: 0.8;
+}
+
+.progress {
+    background-color: var(--form-control-background-color);
+    border: 1px solid var(--form-control-border-color);
+}
+
+.progress-bar {
+    text-shadow: 0 0 2px rgba(0,0,0,0.5);
+    font-weight: bold;
+    transition: width 0.3s ease;
+}
+
+/* Category Filter Styles */
+#category-filter {
+    background: linear-gradient(135deg, var(--form-control-background-color) 0%, #f8f9fa 100%);
+    border: 2px solid var(--form-control-border-color);
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+#category-filter:focus {
+    border-color: var(--button-border-color);
+    box-shadow: 0 0 0 0.2rem rgba(90, 90, 90, 0.15);
+    transform: translateY(-1px);
+}
+
+#category-filter:hover {
+    border-color: var(--button-border-color);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Dark mode styles for category filter */
+body.dark-mode #category-filter {
+    background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+    border-color: #4a5568;
+    color: #e2e8f0;
+}
+
+body.dark-mode #category-filter:focus {
+    border-color: #718096;
+    box-shadow: 0 0 0 0.2rem rgba(113, 128, 150, 0.15);
+}
+
+body.dark-mode #category-filter:hover {
+    border-color: #718096;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Enhanced predefined question select */
+#predefined-question {
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+#predefined-question:focus {
+    transform: translateY(-1px);
+}
+
+/* Form text styling */
+.form-text {
+    font-size: 0.85em;
+    font-style: italic;
+}
+
+/* Category and question container */
+.question-selection-container {
+    background: rgba(248, 249, 250, 0.5);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    border: 1px solid rgba(206, 212, 218, 0.3);
+}
+
+body.dark-mode .question-selection-container {
+    background: rgba(45, 55, 72, 0.5);
+    border-color: rgba(74, 85, 104, 0.3);
+}
+
+/* Bookmark functionality styles */
+.input-group textarea {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+#bookmark-btn {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-left: none;
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    transition: all 0.3s ease;
+}
+
+#bookmark-btn:hover {
+    transform: scale(1.05);
+}
+
+#bookmark-btn i {
+    font-size: 1.2rem;
+}
+
+.toast-notification {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-left: 4px solid #ffc107;
+}
+
+.toast-notification.alert-success {
+    border-left-color: #198754;
+}
+
+.toast-notification.alert-danger {
+    border-left-color: #dc3545;
+}
+
+body.dark-mode #bookmark-btn {
+    background-color: #495057;
+    border-color: #495057;
+    color: #f8f9fa;
+}
+
+body.dark-mode #bookmark-btn:hover {
+    background-color: #6c757d;
+    border-color: #6c757d;
+}
+
+body.dark-mode #bookmark-btn.btn-warning {
+    background-color: #ffc107;
+    border-color: #ffc107;
+    color: #212529;
+}
+
+body.dark-mode #bookmark-btn.btn-warning:hover {
+    background-color: #ffcd39;
+    border-color: #ffcd39;
+}
+
+/* Fix input group styling in dark mode */
+body.dark-mode .input-group textarea {
+    border-color: #495057;
+}
+
+body.dark-mode .input-group textarea:focus {
+    border-color: #86b7fe;
+    box-shadow: none;
+}
+
+/* Math expression styling */
+.MathJax {
+    color: inherit !important;
+    font-size: inherit !important;
+}
+
+/* Ensure math expressions work well in dark mode */
+body.dark-mode .MathJax {
+    color: #E0F2F1 !important;
+}
+
+/* Math display styling */
+.MathJax_Display {
+    margin: 1em 0 !important;
+    text-align: center !important;
+}
+
+/* Inline math styling */
+.MathJax_SVG {
+    vertical-align: middle !important;
+}
+
+/* Math expressions in alert boxes */
+.alert .MathJax {
+    color: inherit !important;
+}
+
+/* Dark mode specific math styling */
+body.dark-mode .alert-success .MathJax {
+    color: #155724 !important;
+}
+
+body.dark-mode .answer-container .MathJax {
+    color: #E0F2F1 !important;
+}

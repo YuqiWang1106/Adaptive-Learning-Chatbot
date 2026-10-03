@@ -1,0 +1,62 @@
+{% load formatting %}
+<aside class="goal-sidebar" aria-label="Learning goal sidebar">
+  <header class="goal-sidebar-header">
+    <div class="goal-sidebar-title">
+      <h2>Learning Goals</h2>
+    </div>
+    <button class="goal-sidebar-toggle" type="button" aria-label="Collapse learning goals" aria-expanded="true">
+      <i class="bi bi-chevron-left" aria-hidden="true"></i>
+    </button>
+  </header>
+
+  <div class="goal-list" role="list">
+    {% if learning_goals and learning_goals|length > 0 %}
+      {% for goal in learning_goals %}
+        {% if active_learning_goal_id and goal.id == active_learning_goal_id %}
+          <a class="goal-item active"
+             href="{% url 'learning_goal_open' goal.id %}"
+             data-goal-search="{{ goal.title|default:goal.preference_text }} {{ goal.preference_text }} {{ goal.domain|default:'General' }} {{ goal.branch|default:'Learning' }}"
+             role="listitem"
+             aria-current="true">
+            <div class="goal-item-title">{{ goal.title|default:goal.preference_text|truncatechars:30 }}</div>
+            <div class="goal-item-subtitle">
+              {{ goal.domain|default:'General'|underscore_to_space }} / {{ goal.branch|default:'Learning'|underscore_to_space }}
+            </div>
+          </a>
+        {% else %}
+          <a class="goal-item"
+             href="{% url 'learning_goal_open' goal.id %}"
+             data-goal-search="{{ goal.title|default:goal.preference_text }} {{ goal.preference_text }} {{ goal.domain|default:'General' }} {{ goal.branch|default:'Learning' }}"
+             role="listitem"
+             aria-current="false">
+            <div class="goal-item-title">{{ goal.title|default:goal.preference_text|truncatechars:30 }}</div>
+            <div class="goal-item-subtitle">
+              {{ goal.domain|default:'General'|underscore_to_space }} / {{ goal.branch|default:'Learning'|underscore_to_space }}
+            </div>
+          </a>
+        {% endif %}
+      {% endfor %}
+    {% else %}
+      <div class="goal-empty">
+        No learning goals yet.
+      </div>
+    {% endif %}
+    <div class="goal-search-empty" hidden>
+      No matching learning goals.
+    </div>
+  </div>
+
+  <div class="goal-sidebar-footer">
+    <a class="goal-new-btn goal-class-btn" href="{% url 'student_classrooms' %}" aria-label="View class invitations and classes">
+      <i class="bi bi-bell" aria-hidden="true"></i>
+      <span>Classes</span>
+      {% if student_pending_class_invitation_count %}
+        <strong class="goal-class-badge">{{ student_pending_class_invitation_count }}</strong>
+      {% endif %}
+    </a>
+    <a class="goal-new-btn" href="{% url 'learning_goal' %}" aria-label="Create new learning goal">
+      <i class="bi bi-plus-lg" aria-hidden="true"></i>
+      <span>New</span>
+    </a>
+  </div>
+</aside>

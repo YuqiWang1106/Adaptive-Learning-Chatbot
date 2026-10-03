@@ -1,0 +1,179 @@
+<div
+  class="material-modal-root"
+  data-material-modal-root
+  data-learning-goal-id="{{ learning_goal_id }}"
+  data-status-url="{% url 'learning_goal_materials' learning_goal_id=learning_goal_id %}"
+  data-upload-url="{% url 'learning_goal_material_upload' learning_goal_id=learning_goal_id %}"
+  hidden
+>
+  <button class="material-modal-backdrop" type="button" data-material-modal-close aria-label="Close"></button>
+  <section class="material-modal-panel" role="dialog" aria-modal="true" aria-labelledby="material-modal-title">
+    <header class="material-modal-header">
+      <div>
+        <h2 id="material-modal-title">Course Materials</h2>
+        <p>Upload PDF, DOCX, PPTX, TXT, or MD files for this learning goal.</p>
+      </div>
+      <button class="material-modal-close-btn" type="button" data-material-modal-close aria-label="Close">
+        <i class="bi bi-x-lg" aria-hidden="true"></i>
+      </button>
+    </header>
+
+    <form class="material-modal-form" data-material-upload-form enctype="multipart/form-data">
+      {% csrf_token %}
+      <input type="file" name="file" accept=".pdf,.docx,.pptx,.txt,.md" data-material-file>
+      <button type="submit" data-material-submit>Upload</button>
+    </form>
+
+    <p class="material-modal-status" data-material-status aria-live="polite">Loading material status...</p>
+    <ul class="material-modal-list" data-material-list></ul>
+  </section>
+</div>
+
+<script>
+(() => {
+  const root = document.querySelector('[data-material-modal-root]');
+  if (!root) return;
+
+  const openButtons = document.querySelectorAll('[data-material-modal-open]');
+  const closeButtons = root.querySelectorAll('[data-material-modal-close]');
+  const form = root.querySelector('[data-material-upload-form]');
+  const fileInput = root.querySelector('[data-material-file]');
+  const submitButton = root.querySelector('[data-material-submit]');
+  const statusEl = root.querySelector('[data-material-status]');
+  const listEl = root.querySelector('[data-material-list]');
+  const statusUrl = root.dataset.statusUrl || '';
+  const uploadUrl = root.dataset.uploadUrl || '';
+  const csrfToken = form?.querySelector('[name="csrfmiddlewaretoken"]')?.value || '';
+
+  const setStatus = (message, tone = 'info') => {
+    if (!statusEl) return;
+    statusEl.textContent = message || '';
+    statusEl.dataset.tone = tone;
+  };
+
+  const escapeHtml = (value) =>
+    String(value || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+
+  const formatTime = (iso) => {
+    if (!iso) return '';
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return '';
+    return date.toLocaleString();
+  };
+
+  const renderMaterials = (materials) => {
+    if (!listEl) return;
+    if (!Array.isArray(materials) || materials.length === 0) {
+      listEl.innerHTML = '<li class="material-modal-empty">No uploaded materials yet.</li>';
+      return;
+    }
+
+    listEl.innerHTML = materials
+      .map(item => {
+        const filename = escapeHtml(item.filename || 'unknown');
+        const status = escapeHtml(item.status || 'unknown');
+        const uploadedAt = formatTime(item.created_at);
+        const timestamp = uploadedAt ? `<span>${escapeHtml(uploadedAt)}</span>` : '';
+        return `
+          <li class="material-modal-item">
+            <div class="material-modal-item-top">
+              <strong title="${filename}">${filename}</strong>
+              <span class="material-status-chip status-${status.toLowerCase()}">${status}</span>
+            </div>
+            <div class="material-modal-item-meta">
+              ${timestamp}
+            </div>
+          </li>
+        `;
+      })
+      .join('');
+  };
+
+  const refreshMaterials = async () => {
+    if (!statusUrl) return;
+    try {
+      const res = await fetch(statusUrl, { credentials: 'same-origin' });
+      const payload = await res.json();
+      if (!res.ok) {
+        setStatus(payload.error || 'Could not load materials.', 'error');
+        return;
+      }
+      const materials = payload.materials || [];
+      const readyCount = materials.filter(item => item.status === 'ready').length;
+      setStatus(`${readyCount}/${materials.length} ready for retrieval.`, readyCount > 0 ? 'success' : 'info');
+      renderMaterials(materials);
+    } catch (err) {
+      setStatus('Could not load materials.', 'error');
+    }
+  };
+
+  const openModal = () => {
+    root.hidden = false;
+    document.body.classList.add('material-modal-open');
+    refreshMaterials();
+    if (fileInput) fileInput.focus();
+  };
+
+  const closeModal = () => {
+    root.hidden = true;
+    document.body.classList.remove('material-modal-open');
+  };
+
+  openButtons.forEach(button => {
+    button.addEventListener('click', openModal);
+  });
+
+  closeButtons.forEach(button => {
+    button.addEventListener('click', closeModal);
+  });
+
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && !root.hidden) {
+      closeModal();
+    }
+  });
+
+  if (form && fileInput) {
+    form.addEventListener('submit', async event => {
+      event.preventDefault();
+      const file = fileInput.files && fileInput.files[0];
+      if (!file) {
+        setStatus('Choose a file before uploading.', 'warning');
+        return;
+      }
+
+      const body = new FormData();
+      body.append('file', file);
+      if (submitButton) submitButton.disabled = true;
+      setStatus(`Uploading ${file.name}...`, 'info');
+
+      try {
+        const res = await fetch(uploadUrl, {
+          method: 'POST',
+          headers: { 'X-CSRFToken': csrfToken },
+          body,
+          credentials: 'same-origin',
+        });
+        const payload = await res.json();
+        if (!res.ok) {
+          setStatus(payload.error || 'Upload failed.', 'error');
+          return;
+        }
+        fileInput.value = '';
+        const material = payload.material || {};
+        setStatus(`${material.filename || 'File'} uploaded: ${material.status || 'processing'}.`, 'success');
+        refreshMaterials();
+      } catch (err) {
+        setStatus('Upload failed.', 'error');
+      } finally {
+        if (submitButton) submitButton.disabled = false;
+      }
+    });
+  }
+})();
+</script>

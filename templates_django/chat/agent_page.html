@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Tutor - Learning Workflow Demo{% endblock %}
+
+{% block extra_css %}
+
+
+
+<link rel="stylesheet" href="{% static 'css/learning_goal.css' %}">
+<link rel="stylesheet" href="{% static 'css/chat.css' %}">
+<link rel="stylesheet" href="{% static 'css/adaptive_agent.css' %}?v=20260803-beta3">
+{% endblock %}
+
+{% block navbar %}
+<nav class="lg-top-nav" aria-label="Tutor navigation">
+  <div class="lg-brand" aria-label="Learning Workflow Demo">
+    <svg class="lg-wordmark" viewBox="0 0 164 46" aria-hidden="true" focusable="false">
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="6.5">
+        <path d="M12 34L18 13L30 28L42 13L48 34"/><path d="M63 13H88"/><path d="M63 23H83"/>
+        <path d="M63 34H88"/><path d="M100 13H128"/><path d="M114 13V34"/><path d="M139 13L151 24L163 13"/><path d="M151 24V34"/>
+      </g>
+    </svg>
+  </div>
+  <div class="agent-nav-title">
+    <span>Adaptive Tutor</span>
+    <small>{{ learning_goal.title|default:"Current learning goal" }}</small>
+  </div>
+  <div class="lg-nav-actions">
+    <a class="agent-track-link" href="{% url 'learning_goal_dashboard' learning_goal_id %}"><i class="bi bi-graph-up-arrow"></i> Track progress</a>
+    <a class="lg-user-chip" href="{% url 'logout' %}"><i class="bi bi-person-circle"></i><span>{{ user.username }}</span></a>
+  </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="goal-app-shell chat-app-shell agent-app-shell">
+  {% include "learning_goal/sidebar.html" %}
+  <main class="goal-main agent-main" aria-label="Adaptive Tutor workspace">
+    <section class="agent-workspace"
+      data-agent-workspace
+      data-goal-id="{{ learning_goal_id }}"
+      data-create-url="{% url 'adaptive_agent:create_run' learning_goal_id %}"
+      data-run-base-url="/api/v2/agent-runs/"
+      data-micro-check-active-url="{% url 'adaptive_agent:active_micro_check' learning_goal_id %}"
+      data-micro-check-base-url="/api/v2/micro-checks/"
+      data-probe-offer-active-url="{% url 'adaptive_agent:active_probe_offer' learning_goal_id %}?surface=chat"
+      data-probe-offer-base-url="/api/v2/probe-offers/"
+      data-history-url="{% url 'chat_history' %}?learning_goal_id={{ learning_goal_id }}"
+      data-history-cursor="{{ history_cursor|default:'' }}"
+      data-memories-url="{% url 'learning_goal_memories' learning_goal_id %}"
+      data-memory-proposal-url="{% url 'learning_goal_memory_proposal' learning_goal_id %}"
+      data-conversation-url="{% url 'learning_goal_conversation_delete' learning_goal_id %}"
+      data-track-url="{% url 'learning_goal_dashboard' learning_goal_id %}">
+      <header class="agent-hero">
+        <div>
+          <p class="agent-eyebrow">Adaptive learning goal</p>
+          <h1>{{ learning_goal.title|default:"Current learning goal" }}</h1>
+          <p>Ask for an explanation, work through a difficult idea, or continue your learning plan.</p>
+        </div>
+        <div class="agent-safety-badge"><i class="bi bi-shield-check"></i><span>Evidence-aware tutoring</span></div>
+      </header>
+
+      <div id="agent-status" class="agent-status" role="status" aria-live="polite"></div>
+      <div class="agent-controls" aria-label="Conversation controls">
+        <button type="button" class="agent-control-button" data-history-load hidden><i class="bi bi-clock-history"></i> Load earlier messages</button>
+        <button type="button" class="agent-control-button" data-memory-toggle aria-expanded="false" aria-controls="agent-memory-panel"><i class="bi bi-bookmark-check"></i> Preferences</button>
+        <button type="button" class="agent-control-button agent-control-danger" data-conversation-clear><i class="bi bi-trash3"></i> Clear conversation</button>
+      </div>
+
+      <div class="agent-suggestions" aria-label="Suggested questions">
+        {% for question in suggested_questions %}
+        <button type="button" class="agent-suggestion" data-agent-suggestion>{{ question }}</button>
+        {% endfor %}
+      </div>
+
+      <section id="agent-memory-panel" class="agent-memory-panel" hidden aria-labelledby="agent-memory-title">
+        <div class="agent-memory-head">
+          <div><p class="agent-section-title">Goal-scoped memory</p><h2 id="agent-memory-title">Learning preferences</h2></div>
+          <button type="button" class="agent-icon-button" data-memory-close aria-label="Close learning preferences"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <p class="agent-memory-intro">Only explicit, non-sensitive preferences are saved. New entries stay pending until you confirm them.</p>
+        <form class="agent-memory-form" data-memory-form>
+          <label>Preference
+            <select data-memory-key required>
+              <option value="explicit_preference|response_style">Response style</option>
+              <option value="explicit_preference|explanation_depth">Explanation depth</option>
+              <option value="explicit_preference|preferred_language">Preferred language</option>
+              <option value="explicit_preference|practice_format">Practice format</option>
+              <option value="explicit_preference|learning_pace">Learning pace</option>
+              <option value="learning_strategy_preference|learning_strategy">Learning strategy</option>
+              <option value="goal_constraint|goal_constraint">Goal constraint</option>
+            </select>
+          </label>
+          <label>Value
+            <input type="text" data-memory-value maxlength="200" required placeholder="For example: concise with one example">
+          </label>
+          <button type="submit" class="agent-button agent-button-primary">Add for confirmation</button>
+        </form>
+        <p class="agent-memory-status" data-memory-status role="status" aria-live="polite"></p>
+        <div class="agent-memory-list" data-memory-list></div>
+      </section>
+
+      <div id="agent-thread" class="agent-thread" aria-live="polite"></div>
+
+      <form id="agent-question-form" class="agent-composer" aria-label="Ask your adaptive tutor">
+        {% csrf_token %}
+        {% if learning_goal_id %}
+        <button type="button" class="agent-icon-button" data-material-modal-open aria-label="Upload course material"><i class="bi bi-paperclip"></i></button>
+        {% endif %}
+        <textarea id="agent-question" rows="1" maxlength="8000" required placeholder="Ask about this goal, review a weak area, or request a quiz..."></textarea>
+        <button type="submit" class="agent-send"><span>Send</span><i class="bi bi-arrow-up"></i></button>
+      </form>
+      <p id="agent-composer-guard" class="agent-composer-guard" role="status" aria-live="polite" hidden></p>
+      <p class="agent-disclosure">Plans and tool activity are visible. Private model reasoning is never shown.</p>
+    </section>
+  </main>
+</div>
+
+{{ history_items|json_script:"agent-initial-history" }}
+{% if learning_goal_id %}{% include "learning_goal/material_upload_modal.html" %}{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script type="module" src="{% static 'js/adaptive_agent.js' %}"></script>
+{% endblock %}

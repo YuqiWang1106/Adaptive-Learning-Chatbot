@@ -1,0 +1,94 @@
+.auth-page--register {
+  padding-top: 126px;
+}
+
+.auth-page--register .auth-panel {
+  width: min(540px, 100%);
+  min-height: 584px;
+  padding: 34px 44px 28px;
+}
+
+.auth-page--register .auth-panel-head {
+  margin-bottom: 20px;
+}
+
+.auth-page--register .auth-panel-head h1 {
+  margin-bottom: 32px;
+}
+
+.auth-page--register .auth-panel-head p {
+  width: min(390px, 100%);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.auth-form--register {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 10px;
+}
+
+.auth-form--register > input[type="hidden"] {
+  display: none;
+}
+
+.auth-form--register .auth-field {
+  gap: 6px;
+}
+
+.auth-form--register .auth-field--full,
+.auth-form--register .auth-submit {
+  grid-column: 1 / -1;
+}
+
+.auth-form--register .auth-field input,
+.auth-form--register .auth-control,
+.auth-form--register .form-control.auth-control {
+  min-height: 40px;
+}
+
+.auth-page--register .auth-submit {
+  min-height: 46px;
+  margin-top: 4px;
+  background: #000000;
+}
+
+.auth-page--register .auth-submit:hover {
+  background: #202020;
+}
+
+.auth-page--register .auth-switch {
+  margin-top: 14px;
+}
+
+.auth-page--register .auth-divider {
+  margin: 8px 0;
+}
+
+.auth-page--register .auth-terms {
+  margin-top: 10px;
+  font-size: 0.8rem;
+}
+
+@media (max-width: 760px) {
+  .auth-page--register {
+    padding-top: 34px;
+  }
+
+  .auth-page--register .auth-panel {
+    min-height: auto;
+    padding: 38px 24px 30px;
+  }
+
+  .auth-page--register .auth-panel-head h1 {
+    margin-bottom: 42px;
+  }
+
+  .auth-form--register {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-form--register .auth-field--full,
+  .auth-form--register .auth-submit {
+    grid-column: auto;
+  }
+}

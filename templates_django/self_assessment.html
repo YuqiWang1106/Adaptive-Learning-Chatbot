@@ -1,0 +1,370 @@
+{% extends "base.html" %}
+{% load static %}
+{% load formatting %}
+
+{% block title %}Self-Assessment Studio - Learning Workflow Demo{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/learning_goal.css' %}">
+<link rel="stylesheet" href="{% static 'css/self_assessment.css' %}">
+{% endblock %}
+
+{% block navbar %}
+<nav class="lg-top-nav" aria-label="Self-assessment navigation">
+  <div class="lg-brand" aria-label="Learning Workflow Demo">
+    <svg class="lg-wordmark" viewBox="0 0 164 46" aria-hidden="true" focusable="false">
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="6.5">
+        <path d="M12 34L18 13L30 28L42 13L48 34"/><path d="M63 13H88M63 23H83M63 34H88"/>
+        <path d="M100 13H128M114 13V34"/><path d="M139 13L151 24L163 13M151 24V34"/>
+      </g>
+    </svg>
+  </div>
+  <div class="lg-nav-actions">
+    <div class="lg-user-menu"><span class="lg-user-chip"><i class="bi bi-person-circle"></i><span>{{ user.username }}</span></span></div>
+  </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="goal-app-shell sa-app-shell">
+  {% include "learning_goal/sidebar.html" %}
+  <main class="goal-main" aria-label="Self-assessment workspace">
+    <section class="sa-shell sa-v2-shell">
+      <header class="sa-goal-card">
+        <div>
+          <p class="sa-eyebrow">Learning goal</p>
+          <h1>{% firstof goal_title goal_scope preference "Learning goal" %}</h1>
+        </div>
+        <button class="sa-btn-secondary sa-goal-upload-btn" type="button" data-material-modal-open>
+          <i class="bi bi-paperclip" aria-hidden="true"></i>
+          Upload course files
+        </button>
+        {% if core_concepts %}
+        <div class="sa-concept-row" aria-label="Core concepts">
+          <span>Current scope</span>
+          {% for concept in core_concepts %}<span class="sa-concept-chip">{{ concept }}</span>{% endfor %}
+        </div>
+        {% endif %}
+      </header>
+
+      {% if form_has_errors %}
+      <div class="sa-error-summary" role="alert">
+        <strong>Please review the highlighted section.</strong>
+        <span>Your answers are still here; nothing has been submitted yet.</span>
+      </div>
+      {% endif %}
+
+      <article class="sa-panel sa-scope-stage {% if prepared_scope %}is-confirmed{% endif %}" data-scope-stage>
+        <div class="sa-v2-heading">
+          <p class="sa-eyebrow">Stage 1</p>
+          <h2>What kind of task are you preparing to do?</h2>
+        </div>
+        <form class="sa-scope-form" data-scope-form
+              action="{% url 'self_assessment_target_scope_prepare' %}" method="post" novalidate>
+          {% csrf_token %}
+          <input type="hidden" name="learning_goal_id" value="{{ learning_goal_id }}">
+          <div class="sa-field">
+            <label for="target_task" class="visually-hidden">Target task</label>
+            <textarea id="target_task" name="target_task" maxlength="1000"
+                      placeholder="For example: Analyze a real situation using derivatives and justify where the rate of change is greatest.">{% firstof form_values.target_task form_values.context prepared_scope.target_task %}</textarea>
+            {% if field_errors.target_task %}<p class="sa-field-error">{{ field_errors.target_task }}</p>{% endif %}
+          </div>
+          <div class="sa-scope-submit-row">
+            <button class="sa-btn-primary" type="submit" data-scope-submit>Prepare</button>
+          </div>
+        </form>
+        <div class="sa-scope-progress" data-scope-progress hidden aria-live="polite">
+          <span class="sa-progress-spinner" aria-hidden="true"></span>
+          <div><strong data-scope-status>Checking your target…</strong><small>This can take up to a minute.</small></div>
+        </div>
+        <div class="sa-scope-feedback" data-scope-feedback hidden role="alert">
+          <strong data-scope-feedback-title>Revise the target task</strong>
+          <p data-scope-feedback-message></p>
+          <ul data-scope-patterns></ul>
+        </div>
+        <section class="sa-scope-preview" data-scope-preview {% if not prepared_scope %}hidden{% endif %}>
+          <div class="sa-scope-preview-head">
+            <div><p class="sa-eyebrow">Proposed assessment scope</p><h3 data-scope-family>{{ prepared_scope.scope_contract.normalized_task_family }}</h3></div>
+            <span data-scope-quality>{{ prepared_scope.scope_contract.scope_quality|cut:"_"|title }}</span>
+          </div>
+          <p data-scope-explanation>{{ prepared_scope.scope_contract.scope_explanation }}</p>
+          <div class="sa-scope-boundaries">
+            <div><strong>Covered in this check</strong><ul data-scope-covered>{% for item in prepared_scope.scope_contract.assessed_goal_slice %}<li>{{ item }}</li>{% endfor %}</ul></div>
+            <div><strong>Not assessed yet</strong><ul data-scope-excluded>{% for item in prepared_scope.scope_contract.excluded_goal_components %}<li>{{ item }}</li>{% empty %}<li>No additional exclusions were identified.</li>{% endfor %}</ul></div>
+          </div>
+          <div class="sa-scope-preview-actions">
+            <button class="sa-btn-secondary" type="button" data-scope-revise>Revise target</button>
+            <button class="sa-btn-primary" type="button" data-scope-confirm {% if prepared_scope %}hidden{% endif %}>Use this scope</button>
+          </div>
+        </section>
+      </article>
+
+      <section class="sa-dimensions-stage" data-dimensions-stage {% if not prepared_scope %}hidden{% endif %}>
+        <aside class="sa-panel sa-guide-card">
+          <p class="sa-eyebrow">Short guide</p>
+          <h2>Describe your current starting point</h2>
+          <p>This is a self-reported profile, not a test or mastery score. You may answer in any language.</p>
+          <details open><summary>Facts</summary><p>{{ self_assessment_guides.dimensions.facts.guidance }}</p></details>
+          <details><summary>Strategies</summary><p>{{ self_assessment_guides.dimensions.strategies.guidance }}</p></details>
+          <details><summary>Procedures</summary><p>{{ self_assessment_guides.dimensions.procedures.guidance }}</p></details>
+          <details><summary>Rationales</summary><p>{{ self_assessment_guides.dimensions.rationales.guidance }}</p></details>
+          <small>The guide uses a nearby topic and does not answer your target task.</small>
+        </aside>
+
+        <article class="sa-panel sa-panel-form">
+          <div class="sa-v2-heading">
+            <p class="sa-eyebrow">{% if is_revision %}New revision{% else %}Stage 2 · Self assessment{% endif %}</p>
+            <h2>What can you explain right now?</h2>
+          </div>
+          <div class="sa-stepper" role="tablist" aria-label="Self-assessment dimensions">
+            <button type="button" class="sa-step-tab is-active" data-step-index="0">Facts</button>
+            <button type="button" class="sa-step-tab" data-step-index="1">Strategies</button>
+            <button type="button" class="sa-step-tab" data-step-index="2">Procedures</button>
+            <button type="button" class="sa-step-tab" data-step-index="3">Rationales</button>
+          </div>
+
+          <form method="post" class="sa-form" novalidate data-v2-form>
+            {% csrf_token %}
+            <input type="hidden" name="learning_goal_id" value="{{ learning_goal_id }}">
+            <input type="hidden" name="target_task" data-final-target value="{% firstof prepared_scope.target_task form_values.target_task form_values.context %}">
+            <input type="hidden" name="target_task_sha256" data-target-hash value="{% firstof prepared_scope.target_task_sha256 form_values.target_task_sha256 %}">
+            <input type="hidden" name="reference_blueprint_id" data-blueprint-id value="{% firstof prepared_scope.reference_blueprint_id form_values.reference_blueprint_id %}">
+            <input type="hidden" name="reference_blueprint_sha256" data-blueprint-hash value="{% firstof prepared_scope.reference_blueprint_sha256 form_values.reference_blueprint_sha256 %}">
+            <input type="hidden" name="scope_confirmed" data-scope-confirmed value="{% if prepared_scope %}1{% endif %}">
+
+            {% include "self_assessment_dimension_step.html" with index="0" key="facts" label="Facts" state_value=form_values.facts_state statement_value=form_values.facts_statement uncertainties_value=form_values.facts_uncertainties state_error=field_errors.facts_state statement_error=field_errors.facts_statement uncertainties_error=field_errors.facts_uncertainties statement_placeholder="State a definition, relationship, or specific example you know." uncertainties_placeholder="What part is unclear or incomplete?" %}
+            {% include "self_assessment_dimension_step.html" with index="1" key="strategies" label="Strategies" state_value=form_values.strategies_state statement_value=form_values.strategies_statement uncertainties_value=form_values.strategies_uncertainties state_error=field_errors.strategies_state statement_error=field_errors.strategies_statement uncertainties_error=field_errors.strategies_uncertainties statement_placeholder="Describe an approach and when you would choose it." uncertainties_placeholder="Which decision point is still uncertain?" %}
+            {% include "self_assessment_dimension_step.html" with index="2" key="procedures" label="Procedures" state_value=form_values.procedures_state statement_value=form_values.procedures_statement uncertainties_value=form_values.procedures_uncertainties state_error=field_errors.procedures_state statement_error=field_errors.procedures_statement uncertainties_error=field_errors.procedures_uncertainties statement_placeholder="Describe the steps you could carry out now." uncertainties_placeholder="Which step or check is not yet reliable?" %}
+            {% include "self_assessment_dimension_step.html" with index="3" key="rationales" label="Rationales" state_value=form_values.rationales_state statement_value=form_values.rationales_statement uncertainties_value=form_values.rationales_uncertainties state_error=field_errors.rationales_state statement_error=field_errors.rationales_statement uncertainties_error=field_errors.rationales_uncertainties statement_placeholder="Explain why an idea, choice, or step works." uncertainties_placeholder="Which reason can you not yet explain?" %}
+
+            <div class="sa-actions">
+              <button class="sa-step-btn secondary" type="button" data-step-prev disabled>Back</button>
+              <span class="sa-step-count"><span data-step-current>1</span> / 4</span>
+              <button class="sa-step-btn primary" type="button" data-step-next>Next</button>
+              <button class="sa-btn-primary" type="submit" data-step-submit hidden>Submit self-assessment</button>
+            </div>
+          </form>
+        </article>
+      </section>
+    </section>
+  </main>
+</div>
+{% if learning_goal_id %}{% include "learning_goal/material_upload_modal.html" %}{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script>
+(() => {
+  document.body.classList.add('goal-sidebar-layout');
+  const scopeForm = document.querySelector('[data-scope-form]');
+  const scopeInput = document.querySelector('#target_task');
+  const scopeSubmit = document.querySelector('[data-scope-submit]');
+  const scopeProgress = document.querySelector('[data-scope-progress]');
+  const scopeStatus = document.querySelector('[data-scope-status]');
+  const scopeFeedback = document.querySelector('[data-scope-feedback]');
+  const scopePreview = document.querySelector('[data-scope-preview]');
+  const dimensionsStage = document.querySelector('[data-dimensions-stage]');
+  const phaseOne = document.querySelector('[data-phase-one]');
+  const phaseTwo = document.querySelector('[data-phase-two]');
+  const confirmScope = document.querySelector('[data-scope-confirm]');
+  const reviseScope = document.querySelector('[data-scope-revise]');
+  const form = document.querySelector('[data-v2-form]');
+  if (!form) return;
+  const panels = [...form.querySelectorAll('[data-step-panel]')];
+  const tabs = [...document.querySelectorAll('[data-step-index]')];
+  const previous = form.querySelector('[data-step-prev]');
+  const next = form.querySelector('[data-step-next]');
+  const submit = form.querySelector('[data-step-submit]');
+  const currentLabel = form.querySelector('[data-step-current]');
+  let current = 0;
+
+  const meaningful = value => [...value].filter(char => !/\s/u.test(char)).length;
+  const fillList = (node, values, emptyMessage = '') => {
+    node.replaceChildren();
+    const items = values.length ? values : (emptyMessage ? [emptyMessage] : []);
+    items.forEach(value => {
+      const li = document.createElement('li');
+      li.textContent = value;
+      node.append(li);
+    });
+  };
+  const setPreparedFields = payload => {
+    form.elements.target_task.value = payload.target_task;
+    form.elements.target_task_sha256.value = payload.target_task_sha256;
+    form.elements.reference_blueprint_id.value = payload.reference_blueprint_id;
+    form.elements.reference_blueprint_sha256.value = payload.reference_blueprint_sha256;
+  };
+  const renderScope = payload => {
+    const contract = payload.scope_contract || {};
+    scopePreview.querySelector('[data-scope-family]').textContent = contract.normalized_task_family || 'Confirmed task scope';
+    scopePreview.querySelector('[data-scope-quality]').textContent = (contract.scope_quality || 'representative').replaceAll('_', ' ');
+    scopePreview.querySelector('[data-scope-explanation]').textContent = contract.scope_explanation || '';
+    fillList(scopePreview.querySelector('[data-scope-covered]'), contract.assessed_goal_slice || []);
+    fillList(scopePreview.querySelector('[data-scope-excluded]'), contract.excluded_goal_components || [], 'No additional exclusions were identified.');
+    setPreparedFields(payload);
+    scopePreview.hidden = false;
+    confirmScope.hidden = false;
+    scopeFeedback.hidden = true;
+  };
+  const unlockDimensions = () => {
+    form.elements.scope_confirmed.value = '1';
+    scopeInput.disabled = true;
+    scopeSubmit.hidden = true;
+    confirmScope.hidden = true;
+    dimensionsStage.hidden = false;
+    phaseOne?.classList.remove('is-active');
+    phaseOne?.classList.add('is-complete');
+    phaseTwo?.classList.add('is-active');
+    document.querySelector('[data-scope-stage]').classList.add('is-confirmed');
+    dimensionsStage.scrollIntoView({behavior: 'smooth', block: 'start'});
+  };
+  const waitForScope = async statusUrl => {
+    for (let attempt = 0; attempt < 75; attempt += 1) {
+      const response = await fetch(statusUrl, {headers: {'Accept': 'application/json'}, credentials: 'same-origin'});
+      const payload = await response.json();
+      if (payload.state === 'ready') {
+        scopeProgress.hidden = true;
+        scopeSubmit.disabled = false;
+        scopeStatus.textContent = payload.message || 'Scope ready.';
+        renderScope(payload);
+        return;
+      }
+      if (payload.state === 'needs_revision') {
+        scopeProgress.hidden = true;
+        scopeSubmit.disabled = false;
+        scopeFeedback.hidden = false;
+        scopeFeedback.querySelector('[data-scope-feedback-message]').textContent = payload.message || 'Revise the target task and try again.';
+        fillList(scopeFeedback.querySelector('[data-scope-patterns]'), (payload.scope_contract || {}).suggested_target_task_patterns || []);
+        scopeInput.focus();
+        return;
+      }
+      if (!response.ok || ['failed', 'expired'].includes(payload.state)) {
+        throw new Error(payload.message || 'The scope could not be prepared.');
+      }
+      scopeStatus.textContent = payload.message || 'Defining a fair assessment scope…';
+      await new Promise(resolve => window.setTimeout(resolve, 1200));
+    }
+    throw new Error('This is taking longer than expected. Please try again.');
+  };
+  scopeForm.addEventListener('submit', async event => {
+    event.preventDefault();
+    scopeFeedback.hidden = true;
+    scopePreview.hidden = true;
+    dimensionsStage.hidden = true;
+    form.elements.scope_confirmed.value = '';
+    if (meaningful(scopeInput.value) < 12) {
+      scopeFeedback.hidden = false;
+      scopeFeedback.querySelector('[data-scope-feedback-message]').textContent = 'Describe a specific task or problem type using at least 12 non-space characters.';
+      fillList(scopeFeedback.querySelector('[data-scope-patterns]'), []);
+      scopeInput.focus();
+      return;
+    }
+    scopeSubmit.disabled = true;
+    scopeProgress.hidden = false;
+    scopeStatus.textContent = 'Checking your target against the learning goal…';
+    try {
+      const response = await fetch(scopeForm.action, {
+        method: 'POST',
+        body: new FormData(scopeForm),
+        headers: {'Accept': 'application/json'},
+        credentials: 'same-origin'
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.message || 'The target task is not valid.');
+      await waitForScope(payload.status_url);
+    } catch (error) {
+      scopeProgress.hidden = true;
+      scopeSubmit.disabled = false;
+      scopeFeedback.hidden = false;
+      scopeFeedback.querySelector('[data-scope-feedback-message]').textContent = error.message || 'The scope could not be prepared. Please try again.';
+      fillList(scopeFeedback.querySelector('[data-scope-patterns]'), []);
+    }
+  });
+  confirmScope.addEventListener('click', unlockDimensions);
+  reviseScope.addEventListener('click', () => {
+    dimensionsStage.hidden = true;
+    form.elements.scope_confirmed.value = '';
+    form.elements.reference_blueprint_id.value = '';
+    form.elements.reference_blueprint_sha256.value = '';
+    form.elements.target_task_sha256.value = '';
+    scopeInput.disabled = false;
+    scopeSubmit.hidden = false;
+    scopePreview.hidden = true;
+    phaseOne?.classList.add('is-active');
+    phaseOne?.classList.remove('is-complete');
+    phaseTwo?.classList.remove('is-active');
+    document.querySelector('[data-scope-stage]').classList.remove('is-confirmed');
+    scopeInput.focus();
+  });
+
+  const show = index => {
+    current = Math.max(0, Math.min(panels.length - 1, index));
+    panels.forEach((panel, idx) => {
+      panel.hidden = idx !== current;
+      panel.classList.toggle('is-active', idx === current);
+    });
+    tabs.forEach((tab, idx) => {
+      tab.classList.toggle('is-active', idx === current);
+      tab.setAttribute('aria-selected', String(idx === current));
+    });
+    previous.disabled = current === 0;
+    next.hidden = current === panels.length - 1;
+    submit.hidden = current !== panels.length - 1;
+    currentLabel.textContent = String(current + 1);
+  };
+
+  const validatePanel = panel => {
+    panel.querySelectorAll('[data-client-error]').forEach(node => node.remove());
+    if (!panel.dataset.dimension) return true;
+    const key = panel.dataset.dimension;
+    const state = form.querySelector(`input[name="${key}_state"]:checked`);
+    const statement = form.elements[`${key}_statement`];
+    const uncertainties = form.elements[`${key}_uncertainties`];
+    let message = '';
+    if (!state) message = 'Choose one starting point.';
+    else if (state.value === 'can_explain' && meaningful(statement.value) < 12) message = 'Describe what you can explain using at least 12 non-space characters.';
+    else if (state.value === 'uncertain' && meaningful(statement.value + uncertainties.value) < 12) message = 'Describe what you know and what is uncertain using at least 12 non-space characters.';
+    if (!message) return true;
+    const error = document.createElement('p');
+    error.className = 'sa-field-error';
+    error.dataset.clientError = '1';
+    error.textContent = message;
+    panel.querySelector('.sa-state-options').after(error);
+    return false;
+  };
+
+  next.addEventListener('click', () => {
+    if (validatePanel(panels[current])) show(current + 1);
+  });
+  previous.addEventListener('click', () => show(current - 1));
+  tabs.forEach((tab, idx) => tab.addEventListener('click', () => {
+    if (idx <= current || validatePanel(panels[current])) show(idx);
+  }));
+  form.addEventListener('submit', event => {
+    for (let idx = 0; idx < panels.length; idx += 1) {
+      if (!validatePanel(panels[idx])) {
+        event.preventDefault();
+        show(idx);
+        return;
+      }
+    }
+  });
+  document.querySelectorAll('[data-state-choice]').forEach(input => {
+    input.addEventListener('change', () => {
+      const panel = input.closest('[data-dimension]');
+      panel.classList.toggle('is-not-started', input.value === 'not_started');
+    });
+    if (input.checked && input.value === 'not_started') {
+      input.closest('[data-dimension]').classList.add('is-not-started');
+    }
+  });
+  const firstServerError = panels.findIndex(panel => panel.querySelector('.sa-field-error'));
+  show(firstServerError >= 0 ? firstServerError : 0);
+  {% if prepared_scope %}
+  scopeInput.disabled = true;
+  scopeSubmit.hidden = true;
+  {% endif %}
+})();
+</script>
+{% endblock %}

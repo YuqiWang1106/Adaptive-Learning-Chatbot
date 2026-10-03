@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Edit {{ classroom.name }} - Learning Workflow Demo{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/teacher_portal.css' %}">{% endblock %}
+{% block navbar %}{% include "teacher_portal/_teacher_nav.html" %}{% endblock %}
+{% block content %}
+<main class="tp-shell" aria-label="Edit classroom">
+  <div class="tp-breadcrumbs"><a href="{% url 'teacher_dashboard' %}">Overview</a><i class="bi bi-chevron-right"></i><a href="{% url 'teacher_classroom_detail' classroom.id %}">{{ classroom.name }}</a><i class="bi bi-chevron-right"></i><strong>Edit</strong></div>
+  <section class="tp-page-heading"><div><p class="tp-kicker">Class settings</p><h1>Edit {{ classroom.name }}</h1><p>Keep the class identity clear and recognizable for students and reports.</p></div><a class="tp-quiet-button" href="{% url 'teacher_classroom_detail' classroom.id %}"><i class="bi bi-arrow-left"></i>Back to class</a></section>
+  <section class="tp-panel tp-section">
+    <form class="tp-form-grid" method="post">{% csrf_token %}
+      <label class="tp-field tp-field-wide"><span>Class name</span>{{ form.name }}{% if form.name.errors %}<small class="tp-field-error">{{ form.name.errors|join:", " }}</small>{% endif %}</label>
+      <label class="tp-field"><span>Subject</span>{{ form.subject }}</label>
+      <label class="tp-field"><span>Term / period</span>{{ form.term }}</label>
+      <label class="tp-field tp-field-wide"><span>Description</span>{{ form.description }}</label>
+      <div class="tp-dialog-actions tp-field-wide"><a class="tp-quiet-button" href="{% url 'teacher_classroom_detail' classroom.id %}">Cancel</a><button class="tp-button" type="submit"><i class="bi bi-check2"></i>Save changes</button></div>
+    </form>
+  </section>
+</main>
+{% endblock %}

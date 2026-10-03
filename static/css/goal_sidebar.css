@@ -1,0 +1,230 @@
+/* ChatGPT-like sidebar layout for learning-goal / self-assessment / chat pages.
+   Scoped via body.goal-sidebar-layout to avoid impacting other pages. */
+
+body.goal-sidebar-layout {
+  overflow: hidden;
+}
+
+body.goal-sidebar-layout main.container {
+  width: 100% !important;
+  max-width: 100% !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  height: 100vh;
+}
+
+.goal-app-shell {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  align-items: stretch;
+  background: transparent;
+}
+
+.goal-sidebar {
+  width: 300px;
+  min-width: 260px;
+  max-width: 360px;
+  background: rgba(7, 7, 8, 0.96);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 28px 0 80px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 14px 14px;
+}
+
+.goal-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.goal-sidebar-brand {
+  font-family: 'Playfair Display', 'Times New Roman', serif;
+  letter-spacing: 0.14em;
+  text-transform: lowercase;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.96);
+  text-decoration: none;
+}
+
+.goal-sidebar-brand:hover {
+  color: #ffffff;
+}
+
+.goal-new-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.92);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.goal-new-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+}
+
+.goal-sidebar-meta {
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 2px 0;
+}
+
+.goal-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.goal-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  text-decoration: none;
+  color: rgba(255, 255, 255, 0.86);
+  transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+}
+
+.goal-item:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+}
+
+.goal-item.active {
+  border-color: rgba(167, 255, 222, 0.45);
+  background: rgba(167, 255, 222, 0.08);
+}
+
+.goal-item-title {
+  font-weight: 800;
+  font-size: 0.92rem;
+  line-height: 1.2;
+}
+
+.goal-item-subtitle {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.68);
+  line-height: 1.2;
+}
+
+.goal-item-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.7);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.goal-sidebar-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.goal-sidebar-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.goal-sidebar-link {
+  color: rgba(255, 255, 255, 0.75);
+  text-decoration: none;
+  font-size: 0.86rem;
+}
+
+.goal-sidebar-link:hover {
+  color: #ffffff;
+}
+
+.goal-logout {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.7rem 0.9rem;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.92);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+}
+
+.goal-logout:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+}
+
+.goal-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  overflow-y: auto;
+}
+
+@media (max-width: 920px) {
+  .goal-sidebar {
+    width: 260px;
+  }
+}
+
+@media (max-width: 720px) {
+  /* Mobile: stack sidebar on top so switching still works. */
+  .goal-app-shell {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .goal-sidebar {
+    width: 100%;
+    max-width: none;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: none;
+  }
+
+  .goal-main {
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+  body.goal-sidebar-layout main.container {
+    height: auto;
+    overflow: visible;
+  }
+  body.goal-sidebar-layout {
+    overflow: auto;
+  }
+}

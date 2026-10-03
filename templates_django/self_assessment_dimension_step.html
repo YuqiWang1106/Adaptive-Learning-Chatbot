@@ -1,0 +1,22 @@
+<section class="sa-step-panel" data-step-panel="{{ index }}" data-dimension="{{ key }}" hidden>
+  <div class="sa-field-heading">{{ label }}</div>
+  <p class="sa-field-help">Choose the statement that best reflects your current starting point.</p>
+  <div class="sa-state-options" role="radiogroup" aria-label="{{ label }} starting point">
+    <label><input type="radio" name="{{ key }}_state" value="can_explain" data-state-choice {% if state_value == "can_explain" %}checked{% endif %}><span><strong>I can explain this</strong><small>Describe what you can explain</small></span></label>
+    <label><input type="radio" name="{{ key }}_state" value="uncertain" data-state-choice {% if state_value == "uncertain" %}checked{% endif %}><span><strong>I am uncertain</strong><small>Say what you know and what is unclear</small></span></label>
+    <label><input type="radio" name="{{ key }}_state" value="not_started" data-state-choice {% if state_value == "not_started" %}checked{% endif %}><span><strong>I have not started</strong><small>No written explanation required</small></span></label>
+  </div>
+  {% if state_error %}<p class="sa-field-error">{{ state_error }}</p>{% endif %}
+  <div class="sa-dimension-writing">
+    <div class="sa-field">
+      <label for="{{ key }}_statement">Statement</label>
+      <textarea id="{{ key }}_statement" name="{{ key }}_statement" maxlength="4000" placeholder="{{ statement_placeholder }}">{{ statement_value }}</textarea>
+      {% if statement_error %}<p class="sa-field-error">{{ statement_error }}</p>{% endif %}
+    </div>
+    <div class="sa-field">
+      <label for="{{ key }}_uncertainties">What remains uncertain <span>Optional for “I can explain”</span></label>
+      <textarea id="{{ key }}_uncertainties" name="{{ key }}_uncertainties" maxlength="4000" placeholder="{{ uncertainties_placeholder }}">{{ uncertainties_value }}</textarea>
+      {% if uncertainties_error %}<p class="sa-field-error">{{ uncertainties_error }}</p>{% endif %}
+    </div>
+  </div>
+</section>

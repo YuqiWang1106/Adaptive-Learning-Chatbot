@@ -1,0 +1,26 @@
+# Application runtime
+Django>=4.2,<5.0
+django-redis==5.4.0
+celery[redis]==5.4.0
+gunicorn==23.0.0
+whitenoise==6.8.2
+python-dotenv==1.1.1
+PyMySQL==1.1.1
+mysql-connector-python==9.3.0
+openai==2.46.0
+openai-agents==0.18.3
+cryptography==45.0.7
+pypdf==6.14.2
+requests==2.32.3
+Markdown==3.7
+nh3==0.3.6
+pymdown-extensions==10.12
+nltk==3.9.1
+Werkzeug==3.1.1
+
+# Repository quality and test tooling
+pytest==8.4.2
+pytest-django==4.11.1
+playwright==1.58.0
+ruff==0.15.22
+vulture==2.14

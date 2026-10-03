@@ -1,0 +1,28 @@
+<nav class="tp-nav" aria-label="Teacher navigation">
+  <a class="tp-brand" href="{% url 'teacher_dashboard' %}" aria-label="Learning Workflow Demo teacher dashboard">Learning Workflow Demo</a>
+  <div class="tp-nav-divider" aria-hidden="true"></div>
+  <div class="tp-nav-product">
+    <span>Teacher workspace</span>
+    <strong>Learning intelligence</strong>
+  </div>
+  <div class="tp-nav-links" aria-label="Workspace links">
+    <a class="tp-nav-link {% if request.resolver_match.url_name == 'teacher_dashboard' %}is-active{% endif %}" href="{% url 'teacher_dashboard' %}">
+      <i class="bi bi-grid-1x2" aria-hidden="true"></i>
+      <span>Overview</span>
+    </a>
+  </div>
+  <details class="tp-account-menu">
+    <summary aria-label="Open account menu">
+      <span class="tp-avatar" aria-hidden="true">{{ user.username|slice:":1"|upper }}</span>
+      <span class="tp-account-copy"><small>Teacher</small><strong>{{ user.username }}</strong></span>
+      <i class="bi bi-chevron-down" aria-hidden="true"></i>
+    </summary>
+    <div class="tp-account-popover">
+      <div>
+        <small>Signed in as</small>
+        <strong>{{ user.username }}</strong>
+      </div>
+      <a href="{% url 'logout' %}"><i class="bi bi-box-arrow-right" aria-hidden="true"></i>Log out</a>
+    </div>
+  </details>
+</nav>

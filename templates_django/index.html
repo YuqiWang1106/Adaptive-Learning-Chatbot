@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Learning Workflow Demo{% endblock %}
+
+{% block content %}
+<section class="mx-auto py-5" style="max-width: 800px">
+  <p class="text-uppercase text-secondary fw-semibold">Engineering showcase</p>
+  <h1 class="display-5 fw-bold">Reliable learning workflows</h1>
+  <p class="lead mt-4">
+    A Django application for long-running learning tasks, with versioned
+    capabilities, durable run state, retry controls, and event replay after a
+    client reconnects.
+  </p>
+  <div class="d-flex gap-3 mt-4">
+    <a class="btn btn-dark" href="{% url 'register' %}">Explore locally</a>
+    <a class="btn btn-outline-secondary" href="{% url 'login' %}">Sign in</a>
+  </div>
+  <p class="small text-secondary mt-5">
+    This repository contains a sanitized engineering snapshot and synthetic
+    tests. It includes no customer data or live provider credentials.
+  </p>
+</section>
+{% endblock %}

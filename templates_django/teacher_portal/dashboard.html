@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Teaching Overview - Learning Workflow Demo{% endblock %}
+
+{% block extra_css %}
+
+
+
+<link rel="stylesheet" href="{% static 'css/teacher_portal.css' %}">
+{% endblock %}
+
+{% block navbar %}{% include "teacher_portal/_teacher_nav.html" %}{% endblock %}
+
+{% block content %}
+<main class="tp-shell" aria-label="Teacher dashboard">
+  <div class="tp-breadcrumbs" aria-label="Breadcrumb"><span>Teacher workspace</span><i class="bi bi-chevron-right"></i><strong>Overview</strong></div>
+
+  <section class="tp-page-heading">
+    <div>
+      <p class="tp-kicker">Teaching intelligence</p>
+      <h1>Good to see you, {{ user.username }}.</h1>
+      <p>Move from class-level signals to a student’s individual learning goal report in a few clicks.</p>
+    </div>
+    <button class="tp-button" type="button" data-dialog-open="create-class-dialog">
+      <i class="bi bi-plus-lg" aria-hidden="true"></i>Create class
+    </button>
+  </section>
+
+  <section class="tp-metric-grid" aria-label="Teaching overview metrics">
+    <article class="tp-metric tp-metric-primary">
+      <div class="tp-metric-icon"><i class="bi bi-collection" aria-hidden="true"></i></div>
+      <div><span>Active classes</span><strong>{{ dashboard_summary.classroom_count }}</strong><small>Owned by you</small></div>
+    </article>
+    <article class="tp-metric">
+      <div class="tp-metric-icon"><i class="bi bi-people" aria-hidden="true"></i></div>
+      <div><span>Unique students</span><strong>{{ dashboard_summary.student_count }}</strong><small>Accepted memberships</small></div>
+    </article>
+    <article class="tp-metric">
+      <div class="tp-metric-icon"><i class="bi bi-bullseye" aria-hidden="true"></i></div>
+      <div><span>Learning goals</span><strong>{{ dashboard_summary.learning_goal_count }}</strong><small>Across your students</small></div>
+    </article>
+    <article class="tp-metric {% if dashboard_summary.attention_student_count %}tp-metric-warning{% endif %}">
+      <div class="tp-metric-icon"><i class="bi bi-activity" aria-hidden="true"></i></div>
+      <div><span>Priority review</span><strong>{{ dashboard_summary.attention_student_count }}</strong><small>Students below 50% quality</small></div>
+    </article>
+  </section>
+
+  <section class="tp-section">
+    <div class="tp-section-head">
+      <div>
+        <p class="tp-kicker">Class navigator</p>
+        <h2>Your classes</h2>
+        <p>Select a class to find students and open their learning reports.</p>
+      </div>
+      {% if classrooms %}
+      <label class="tp-search-control">
+        <i class="bi bi-search" aria-hidden="true"></i>
+        <span class="visually-hidden">Search classes</span>
+        <input type="search" placeholder="Search classes" autocomplete="off" data-class-search>
+      </label>
+      {% endif %}
+    </div>
+
+    {% if classrooms %}
+      <div class="tp-class-grid" data-class-list>
+        {% for classroom in classrooms %}
+          <article class="tp-class-card" data-class-card data-search-text="{{ classroom.name }} {{ classroom.subject }} {{ classroom.term }}">
+            <div class="tp-class-card-top">
+              <span class="tp-class-icon"><i class="bi bi-mortarboard" aria-hidden="true"></i></span>
+              <span class="tp-status tp-status-on_track"><i></i>Active</span>
+            </div>
+            <div>
+              <p class="tp-class-subject">{{ classroom.subject|default:"General learning" }}</p>
+              <h3>{{ classroom.name }}</h3>
+              <p class="tp-class-description">{{ classroom.description|default:"No class description yet."|truncatechars:120 }}</p>
+            </div>
+            <div class="tp-class-meta">
+              {% if classroom.term %}<span><i class="bi bi-calendar3"></i>{{ classroom.term }}</span>{% endif %}
+              <span><i class="bi bi-clock-history"></i>{% if classroom.last_student_activity_ago %}Activity {{ classroom.last_student_activity_ago }} ago{% else %}No activity yet{% endif %}</span>
+            </div>
+            <div class="tp-class-stats">
+              <span><strong>{{ classroom.student_count }}</strong> students</span>
+              <span><strong>{{ classroom.learning_goal_count }}</strong> goals</span>
+              <span><strong>{{ classroom.chat_count }}</strong> chats</span>
+              {% if classroom.pending_invitation_count %}<span class="is-pending"><strong>{{ classroom.pending_invitation_count }}</strong> pending</span>{% endif %}
+            </div>
+            <a class="tp-card-link" href="{% url 'teacher_classroom_detail' classroom.id %}">
+              Open class <i class="bi bi-arrow-right" aria-hidden="true"></i>
+            </a>
+          </article>
+        {% endfor %}
+      </div>
+      <div class="tp-empty" data-class-empty hidden>
+        <i class="bi bi-search"></i><strong>No matching classes</strong><span>Try a different class name, subject, or term.</span>
+      </div>
+    {% else %}
+      <div class="tp-empty tp-empty-large">
+        <span class="tp-empty-icon"><i class="bi bi-collection"></i></span>
+        <strong>Create your first class</strong>
+        <span>Classes organize invitations, students, and goal-level learning evidence.</span>
+        <button class="tp-button" type="button" data-dialog-open="create-class-dialog"><i class="bi bi-plus-lg"></i>Create class</button>
+      </div>
+    {% endif %}
+  </section>
+</main>
+
+<dialog class="tp-dialog" id="create-class-dialog" aria-labelledby="create-class-title">
+  <form class="tp-dialog-card" method="post" action="{% url 'teacher_dashboard' %}">
+    {% csrf_token %}
+    <div class="tp-dialog-head">
+      <div><p class="tp-kicker">New workspace</p><h2 id="create-class-title">Create a class</h2></div>
+      <button class="tp-icon-button" type="button" data-dialog-close aria-label="Close create class dialog"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <p class="tp-dialog-intro">Use a clear class name and subject so students can recognize the invitation.</p>
+    <div class="tp-form-grid">
+      <label class="tp-field tp-field-wide"><span>Class name</span>{{ form.name }}{% if form.name.errors %}<small class="tp-field-error">{{ form.name.errors|join:", " }}</small>{% endif %}</label>
+      <label class="tp-field"><span>Subject</span>{{ form.subject }}</label>
+      <label class="tp-field"><span>Term / period</span>{{ form.term }}</label>
+      <label class="tp-field tp-field-wide"><span>Description</span>{{ form.description }}</label>
+    </div>
+    <div class="tp-dialog-actions">
+      <button class="tp-quiet-button" type="button" data-dialog-close>Cancel</button>
+      <button class="tp-button" type="submit"><i class="bi bi-plus-lg"></i>Create class</button>
+    </div>
+  </form>
+</dialog>
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script src="{% static 'js/teacher_portal.js' %}"></script>
+{% if form.errors %}<script>window.addEventListener('DOMContentLoaded', () => document.getElementById('create-class-dialog')?.showModal());</script>{% endif %}
+{% endblock %}

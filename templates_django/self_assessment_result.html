@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Your Self-Assessment - Learning Workflow Demo{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/self_assessment.css' %}">{% endblock %}
+
+{% block content %}
+<main class="sa-result-shell">
+  <header class="sa-result-hero">
+    <p class="sa-eyebrow">Self-reported starting profile</p>
+    <h1>Your current view of this learning goal</h1>
+    <p class="sa-result-goal">{{ goal.preference_text|default:goal.title }}</p>
+    <div class="sa-alignment sa-alignment-{{ goal_alignment }}">
+      <strong>Goal alignment: {{ goal_alignment|cut:"_"|title }}</strong>
+      <span>{{ goal_alignment_explanation }}</span>
+    </div>
+    <p class="sa-result-disclaimer">This is perceived guidance from your own answers. It is not observed mastery and does not include a mastery percentage.</p>
+  </header>
+
+  {% if target_task or scope_contract.normalized_task_family %}
+  <section class="sa-result-scope">
+    <div>
+      <p class="sa-eyebrow">This check focused on</p>
+      <h2>{{ scope_contract.normalized_task_family|default:target_task }}</h2>
+      <p>{{ scope_contract.scope_explanation }}</p>
+      <small>Your target: {{ target_task }}</small>
+    </div>
+    <div class="sa-scope-boundaries">
+      <div><strong>Covered in this check</strong><ul>{% for item in scope_contract.assessed_goal_slice %}<li>{{ item }}</li>{% endfor %}</ul></div>
+      <div><strong>Not assessed yet</strong><ul>{% for item in scope_contract.excluded_goal_components %}<li>{{ item }}</li>{% empty %}<li>No additional exclusions were identified.</li>{% endfor %}</ul></div>
+    </div>
+  </section>
+  {% endif %}
+
+  {% if needs_revision %}
+  <section class="sa-result-notice">
+    <strong>This response needs revision before it can guide tutoring.</strong>
+    <span>Your original answers are preserved. Reason: {{ decision_reason|default:"the response could not be safely validated" }}.</span>
+  </section>
+  {% endif %}
+
+  <section class="sa-result-grid">
+    {% for dimension in dimensions %}
+    <article class="sa-result-card">
+      <div class="sa-result-card-head">
+        <div><p class="sa-eyebrow">{{ dimension.sufficiency }}</p><h2>{{ dimension.label }}</h2></div>
+        <span class="sa-band sa-band-{{ dimension.sufficiency_key }}">{{ dimension.band }}</span>
+      </div>
+      <div class="sa-student-words">
+        <strong>Your words</strong>
+        <p>{{ dimension.student_words|linebreaksbr|default:"No written response was required." }}</p>
+      </div>
+      {% if dimension.aspects %}
+      <div class="sa-result-aspects">
+        {% for aspect in dimension.aspects %}
+        <div><strong>{{ aspect.name }}</strong><span>{{ aspect.labels|join:", " }}</span><p>{{ aspect.explanation }}</p></div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% if dimension.next_step %}<p class="sa-next-step"><strong>Suggested next step</strong>{{ dimension.next_step }}</p>{% endif %}
+    </article>
+    {% endfor %}
+  </section>
+
+  <section class="sa-result-actions">
+    <div>
+      <h2>Choose what to do next</h2>
+      <p>The 1-minute check is optional. Skipping it never blocks chat.</p>
+    </div>
+    <div class="sa-result-buttons">
+      <a class="sa-btn-secondary" href="{% url 'self_assessment' %}?learning_goal_id={{ goal.id }}&revise={{ assessment.id }}">Revise answers</a>
+      {% if probe_offer and accepted %}
+      <button class="sa-btn-secondary" type="button" data-calibration
+              data-accept-url="/api/v2/probe-offers/{{ probe_offer.offer_id }}/accept"
+              data-dashboard-url="{% url 'learning_goal_dashboard' goal.id %}">
+        Take a 1-minute check
+      </button>
+      {% endif %}
+      <a class="sa-btn-primary" href="{% url 'chat' %}?learning_goal_id={{ goal.id }}">Continue to chat</a>
+    </div>
+    <p data-calibration-status aria-live="polite"></p>
+  </section>
+</main>
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script>
+(() => {
+  const button = document.querySelector('[data-calibration]');
+  if (!button) return;
+  const status = document.querySelector('[data-calibration-status]');
+  const cookie = document.cookie.split('; ').find(item => item.startsWith('csrftoken='));
+  const csrf = cookie ? decodeURIComponent(cookie.split('=')[1]) : '';
+  button.addEventListener('click', async () => {
+    button.disabled = true;
+    status.textContent = 'Preparing one short question…';
+    try {
+      const response = await fetch(button.dataset.acceptUrl, {
+        method: 'POST',
+        headers: {'X-CSRFToken': csrf, 'Accept': 'application/json'},
+        credentials: 'same-origin'
+      });
+      if (!response.ok) throw new Error('request_failed');
+      window.location.assign(button.dataset.dashboardUrl);
+    } catch (_error) {
+      button.disabled = false;
+      status.textContent = 'The check could not be prepared. You can continue to chat and try later.';
+    }
+  });
+})();
+</script>
+{% endblock %}

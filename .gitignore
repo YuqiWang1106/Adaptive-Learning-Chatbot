@@ -1,0 +1,38 @@
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Runtime data and user exports
+*.sqlite3
+*.db
+*.sql
+profiles.json*
+logs/
+media/
+staticfiles/
+demo_data/
+tests/fixtures/
+
+# Local environments and caches
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.django_cache/
+.mypy_cache/
+.coverage
+coverage.xml
+*.egg-info/
+build/
+dist/
+
+# IDE and operating system files
+.vs/
+.vscode/
+.idea/
+.DS_Store

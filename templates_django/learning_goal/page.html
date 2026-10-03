@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Set Learning Goal - Learning Workflow Demo{% endblock %}
+
+{% block extra_css %}
+
+
+
+<link rel="stylesheet" href="{% static 'css/learning_goal.css' %}">
+{% endblock %}
+
+{% block navbar %}
+<nav class="lg-top-nav" aria-label="Learning goal navigation">
+  <div class="lg-brand" aria-label="Learning Workflow Demo">
+    <svg class="lg-wordmark" viewBox="0 0 164 46" aria-hidden="true" focusable="false">
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="6.5">
+        <path d="M12 34L18 13L30 28L42 13L48 34" />
+        <path d="M63 13H88" />
+        <path d="M63 23H83" />
+        <path d="M63 34H88" />
+        <path d="M100 13H128" />
+        <path d="M114 13V34" />
+        <path d="M139 13L151 24L163 13" />
+        <path d="M151 24V34" />
+      </g>
+    </svg>
+  </div>
+
+  <div class="lg-nav-search" role="search">
+    <label class="visually-hidden" for="lg-nav-search-input">Search learning goals</label>
+    <input id="lg-nav-search-input" type="search" placeholder="Search" autocomplete="off">
+    <i class="bi bi-search" aria-hidden="true"></i>
+  </div>
+
+  <div class="lg-nav-actions">
+    <div class="lg-user-menu">
+      <button type="button" class="lg-user-chip" aria-label="Account menu" aria-haspopup="menu" aria-expanded="false">
+        <i class="bi bi-person-circle" aria-hidden="true"></i>
+        <span>{{ user.username }}</span>
+      </button>
+      <div class="lg-user-dropdown" role="menu" hidden>
+        <a class="lg-user-dropdown-item" href="{% url 'logout' %}" role="menuitem">Log out</a>
+      </div>
+    </div>
+  </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="goal-app-shell">
+  {% include "learning_goal/sidebar.html" %}
+
+  <div class="goal-main" aria-label="Learning goal workspace">
+    <section class="lg-shell">
+      <article class="lg-card">
+        <div class="lg-hero-strip" aria-hidden="true">
+          <span>Tell Learning Workflow Demo your learning goal</span>
+        </div>
+
+        <div class="lg-card-body">
+          <p class="lg-text">
+            Describe in a sentence or two what you want help with. Keep it brief and specific.
+          </p>
+
+          <div class="lg-tags" role="list" aria-label="Goal examples">
+            <button type="button" class="lg-tag" data-sample="Help me strengthen linear algebra fundamentals and calculations in eight weeks.">Linear algebra</button>
+            <button type="button" class="lg-tag" data-sample="Help me pass discrete math in two months, focusing on proofs and number theory basics.">Discrete math</button>
+            <button type="button" class="lg-tag" data-sample="Coach me for TOEFL speaking with structured answers and timing practice.">TOEFL speaking</button>
+            <button type="button" class="lg-tag" data-sample="Help me review macroeconomics exam topics, including key graphs and formulas.">Macroeconomics</button>
+            <button type="button" class="lg-tag" data-sample="Guide me through Python data analysis projects until I can explain the code clearly.">Python projects</button>
+          </div>
+
+          <form method="post" class="lg-form" aria-label="Learning Goal Form">
+            {% csrf_token %}
+            <label class="visually-hidden" for="preference">Your learning goal</label>
+            <textarea id="preference" name="preference" placeholder="eg. Help me pass discrete math in two months-focus on proofs and number theory basics."></textarea>
+
+            <div class="lg-actions">
+              <button type="submit" class="lg-btn primary">Submit</button>
+              <button type="button" class="lg-btn secondary" id="lg-clear">Clear</button>
+            </div>
+          </form>
+        </div>
+      </article>
+    </section>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    document.body.classList.add('goal-sidebar-layout');
+  });
+
+  (() => {
+    const textarea = document.getElementById('preference');
+    const tags = document.querySelectorAll('.lg-tag');
+    const clearBtn = document.getElementById('lg-clear');
+    const searchInput = document.getElementById('lg-nav-search-input');
+    const goalItems = Array.from(document.querySelectorAll('.goal-item[data-goal-search]'));
+    const searchEmpty = document.querySelector('.goal-search-empty');
+    const sidebarToggle = document.querySelector('.goal-sidebar-toggle');
+    const userMenuButton = document.querySelector('.lg-user-chip');
+    const userMenu = document.querySelector('.lg-user-dropdown');
+
+    const closeUserMenu = () => {
+      if (!userMenuButton || !userMenu) return;
+      userMenu.hidden = true;
+      userMenuButton.setAttribute('aria-expanded', 'false');
+    };
+
+    if (userMenuButton && userMenu) {
+      userMenuButton.addEventListener('click', event => {
+        event.stopPropagation();
+        const isOpen = !userMenu.hidden;
+        userMenu.hidden = isOpen;
+        userMenuButton.setAttribute('aria-expanded', String(!isOpen));
+      });
+
+      document.addEventListener('click', event => {
+        if (!userMenu.contains(event.target) && !userMenuButton.contains(event.target)) {
+          closeUserMenu();
+        }
+      });
+
+      document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') {
+          closeUserMenu();
+        }
+      });
+    }
+
+    tags.forEach(tag => {
+      tag.addEventListener('click', () => {
+        const sample = tag.getAttribute('data-sample') || '';
+        textarea.value = sample;
+        textarea.focus();
+      });
+    });
+
+    if (clearBtn) {
+      clearBtn.addEventListener('click', () => {
+        textarea.value = '';
+        textarea.focus();
+      });
+    }
+
+    if (searchInput && goalItems.length) {
+      const filterGoals = () => {
+        const query = searchInput.value.trim().toLowerCase();
+        let visibleCount = 0;
+
+        goalItems.forEach(item => {
+          const searchText = (item.dataset.goalSearch || '').toLowerCase();
+          const isMatch = !query || searchText.includes(query);
+          item.hidden = !isMatch;
+          if (isMatch) {
+            visibleCount += 1;
+          }
+        });
+
+        if (searchEmpty) {
+          searchEmpty.hidden = !query || visibleCount > 0;
+        }
+      };
+
+      searchInput.addEventListener('input', filterGoals);
+      searchInput.addEventListener('keydown', event => {
+        if (event.key === 'Escape') {
+          searchInput.value = '';
+          filterGoals();
+          searchInput.blur();
+        }
+      });
+    }
+
+    if (sidebarToggle) {
+      sidebarToggle.addEventListener('click', () => {
+        const isCollapsed = document.body.classList.toggle('goal-sidebar-collapsed');
+        sidebarToggle.setAttribute('aria-expanded', String(!isCollapsed));
+        sidebarToggle.setAttribute(
+          'aria-label',
+          isCollapsed ? 'Expand learning goals' : 'Collapse learning goals'
+        );
+      });
+    }
+  })();
+</script>
+{% endblock %}

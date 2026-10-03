@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ classroom.name }} - Learning Workflow Demo{% endblock %}
+{% block extra_css %}
+
+
+<link rel="stylesheet" href="{% static 'css/teacher_portal.css' %}">
+{% endblock %}
+{% block navbar %}{% include "teacher_portal/_teacher_nav.html" %}{% endblock %}
+
+{% block content %}
+<main class="tp-shell" aria-label="Classroom detail">
+  <div class="tp-breadcrumbs" aria-label="Breadcrumb">
+    <a href="{% url 'teacher_dashboard' %}">Overview</a><i class="bi bi-chevron-right"></i><strong>{{ classroom.name }}</strong>
+  </div>
+
+  <section class="tp-page-heading tp-page-heading-class">
+    <div>
+      <div class="tp-heading-meta"><span class="tp-status tp-status-on_track"><i></i>Active class</span>{% if classroom.term %}<span>{{ classroom.term }}</span>{% endif %}</div>
+      <h1>{{ classroom.name }}</h1>
+      <p>{{ classroom.description|default:"Manage students, invitations, and goal-level learning reports for this class." }}</p>
+    </div>
+    <div class="tp-heading-actions">
+      <button class="tp-button" type="button" data-dialog-open="invite-student-dialog"><i class="bi bi-person-plus"></i>Invite student</button>
+      <details class="tp-action-menu">
+        <summary class="tp-quiet-button" aria-label="Class settings"><i class="bi bi-three-dots"></i>Manage</summary>
+        <div>
+          <a href="{% url 'teacher_classroom_edit' classroom.id %}"><i class="bi bi-pencil"></i>Edit details</a>
+          <form method="post" action="{% url 'teacher_classroom_archive' classroom.id %}">{% csrf_token %}<button type="submit"><i class="bi bi-archive"></i>Archive class</button></form>
+          <form method="post" action="{% url 'teacher_classroom_delete' classroom.id %}" onsubmit="return confirm('Delete this class? Student accounts and learning history will stay intact.');">{% csrf_token %}<button class="is-danger" type="submit"><i class="bi bi-trash"></i>Delete class</button></form>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <section class="tp-metric-grid" aria-label="Class metrics">
+    <article class="tp-metric tp-metric-primary"><div class="tp-metric-icon"><i class="bi bi-people"></i></div><div><span>Students</span><strong>{{ class_overview.student_count|default:0 }}</strong><small>Accepted members</small></div></article>
+    <article class="tp-metric"><div class="tp-metric-icon"><i class="bi bi-bullseye"></i></div><div><span>Learning goals</span><strong>{{ class_overview.learning_goal_count|default:0 }}</strong><small>Across this class</small></div></article>
+    <article class="tp-metric"><div class="tp-metric-icon"><i class="bi bi-chat-square-text"></i></div><div><span>Learning chats</span><strong>{{ class_overview.chat_count|default:0 }}</strong><small>Recorded evidence</small></div></article>
+    <article class="tp-metric {% if class_overview.attention_student_count %}tp-metric-warning{% endif %}"><div class="tp-metric-icon"><i class="bi bi-exclamation-diamond"></i></div><div><span>Priority review</span><strong>{{ class_overview.attention_student_count|default:0 }}</strong><small>Students needing support</small></div></article>
+  </section>
+
+  <section class="tp-section tp-panel" data-tab-scope>
+    <div class="tp-panel-toolbar">
+      <div class="tp-tabs" role="tablist" aria-label="Classroom sections">
+        <button class="tp-tab is-active" type="button" role="tab" aria-selected="true" data-tab-target="students-panel"><i class="bi bi-people"></i>Students <span>{{ class_overview.student_count|default:0 }}</span></button>
+        <button class="tp-tab" type="button" role="tab" aria-selected="false" data-tab-target="invitations-panel"><i class="bi bi-send"></i>Invitations <span>{{ class_overview.pending_invitation_count|default:0 }}</span></button>
+      </div>
+      <form class="tp-search-control tp-search-form" method="get" action="{% url 'teacher_classroom_detail' classroom.id %}" role="search">
+        <i class="bi bi-search"></i><label class="visually-hidden" for="student-search">Search students</label>
+        <input id="student-search" type="search" name="q" value="{{ student_query }}" placeholder="Search student, email, level">
+        {% if student_query %}<a href="{% url 'teacher_classroom_detail' classroom.id %}" aria-label="Clear search"><i class="bi bi-x-circle"></i></a>{% endif %}
+      </form>
+    </div>
+
+    <div id="students-panel" data-tab-panel>
+      {% if students %}
+      <div class="tp-table-wrap">
+        <table class="tp-table">
+          <thead><tr><th>Student</th><th>Review status</th><th>Learning activity</th><th>Mastery quality</th><th><span class="visually-hidden">Actions</span></th></tr></thead>
+          <tbody>
+          {% for membership in students %}
+            <tr>
+              <td><div class="tp-student-cell"><span class="tp-avatar">{{ membership.student.username|slice:":1"|upper }}</span><div><strong>{{ membership.student.username }}</strong><small>{{ membership.student.academic_level|default:"Academic level not set" }} · {{ membership.student.email }}</small></div></div></td>
+              <td><span class="tp-status tp-status-{{ membership.review_state }}"><i></i>{{ membership.review_label }}</span>{% if membership.pending_probe_count %}<small class="tp-cell-note">{{ membership.pending_probe_count }} pending probe{{ membership.pending_probe_count|pluralize }}</small>{% endif %}</td>
+              <td><div class="tp-inline-stats"><span><strong>{{ membership.learning_goal_count|default:0 }}</strong> goals</span><span><strong>{{ membership.chat_count|default:0 }}</strong> chats</span></div><small class="tp-cell-note">{% if membership.last_chat_ago %}Last chat {{ membership.last_chat_ago }} ago{% else %}No chat evidence yet{% endif %}</small></td>
+              <td><div class="tp-quality-cell"><div><span>Quality</span><strong>{% if membership.mastery_quality %}{{ membership.mastery_quality_pct }}%{% else %}—{% endif %}</strong></div><span class="tp-progress"><i style="width: {{ membership.mastery_quality_pct }}%"></i></span></div></td>
+              <td><div class="tp-row-actions"><a class="tp-link-button" href="{% url 'teacher_student_report' classroom.id membership.student.user_id %}">View report<i class="bi bi-arrow-right"></i></a><details><summary class="tp-icon-button" aria-label="More actions for {{ membership.student.username }}"><i class="bi bi-three-dots-vertical"></i></summary><div><form method="post" action="{% url 'teacher_remove_student' classroom.id membership.student.user_id %}" onsubmit="return confirm('Remove this student from the class? Their learning history will not be deleted.');">{% csrf_token %}<button type="submit"><i class="bi bi-person-dash"></i>Remove from class</button></form></div></details></div></td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="tp-empty tp-empty-large"><span class="tp-empty-icon"><i class="bi bi-people"></i></span><strong>{% if student_query %}No matching students{% else %}No students in this class yet{% endif %}</strong><span>{% if student_query %}Try another username, email, or academic level.{% else %}Invite a student. Their report becomes available after they accept.{% endif %}</span>{% if not student_query %}<button class="tp-button" type="button" data-dialog-open="invite-student-dialog"><i class="bi bi-person-plus"></i>Invite student</button>{% endif %}</div>
+      {% endif %}
+    </div>
+
+    <div id="invitations-panel" data-tab-panel hidden>
+      <div class="tp-invitation-grid">
+        <section>
+          <div class="tp-subsection-head"><div><p class="tp-kicker">Actionable</p><h3>Pending invitations</h3></div><button class="tp-quiet-button" type="button" data-dialog-open="invite-student-dialog"><i class="bi bi-plus-lg"></i>New invite</button></div>
+          {% if pending_invitations %}<div class="tp-invite-list">{% for invitation in pending_invitations %}<article><span class="tp-avatar">{{ invitation.student.username|slice:":1"|upper }}</span><div><strong>{{ invitation.student.username }}</strong><small>Sent {{ invitation.created_ago }} ago</small></div><form method="post" action="{% url 'teacher_invitation_revoke' classroom.id invitation.id %}">{% csrf_token %}<button class="tp-text-danger" type="submit">Revoke</button></form></article>{% endfor %}</div>{% else %}<div class="tp-empty"><strong>No pending invitations</strong><span>All sent invitations have been resolved.</span></div>{% endif %}
+        </section>
+        <section>
+          <div class="tp-subsection-head"><div><p class="tp-kicker">Audit trail</p><h3>Recent invitation history</h3></div></div>
+          {% if invitation_history %}<div class="tp-history-list">{% for invitation in invitation_history %}<article><span class="tp-history-dot tp-history-{{ invitation.status }}"></span><div><strong>{{ invitation.student.username }}</strong><small>{{ invitation.created_at }} · invited by {{ invitation.invited_by.username }}</small></div><span class="tp-status tp-status-{{ invitation.status }}">{{ invitation.status|title }}</span></article>{% endfor %}</div>{% else %}<div class="tp-empty"><strong>No invitations sent</strong><span>Invitation activity will appear here.</span></div>{% endif %}
+        </section>
+      </div>
+    </div>
+  </section>
+</main>
+
+<dialog class="tp-dialog" id="invite-student-dialog" aria-labelledby="invite-student-title">
+  <form class="tp-dialog-card" method="post" action="{% url 'teacher_classroom_detail' classroom.id %}">{% csrf_token %}
+    <div class="tp-dialog-head"><div><p class="tp-kicker">Internal invitation</p><h2 id="invite-student-title">Invite a student</h2></div><button class="tp-icon-button" type="button" data-dialog-close aria-label="Close invitation dialog"><i class="bi bi-x-lg"></i></button></div>
+    <p class="tp-dialog-intro">Enter an existing student username. The student must accept before you can access their learning reports.</p>
+    <div class="tp-form-grid"><label class="tp-field tp-field-wide"><span>Student username</span>{{ invite_form.username }}</label><label class="tp-field tp-field-wide"><span>Invitation message <small>Optional</small></span>{{ invite_form.message }}</label></div>
+    <div class="tp-consent-note"><i class="bi bi-shield-check"></i><span>Report access is activated only after the student accepts this class invitation.</span></div>
+    <div class="tp-dialog-actions"><button class="tp-quiet-button" type="button" data-dialog-close>Cancel</button><button class="tp-button" type="submit"><i class="bi bi-send"></i>Send invitation</button></div>
+  </form>
+</dialog>
+{% endblock %}
+
+{% block scripts %}{{ block.super }}<script src="{% static 'js/teacher_portal.js' %}"></script>{% endblock %}

@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ report.goal.title }} - {{ report.student.username }} - Learning Workflow Demo{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/teacher_portal.css' %}">{% endblock %}
+{% block navbar %}{% include "teacher_portal/_teacher_nav.html" %}{% endblock %}
+
+{% block content %}
+<main class="tp-shell tp-shell-report" aria-label="Learning goal report">
+  <div class="tp-breadcrumbs"><a href="{% url 'teacher_dashboard' %}">Overview</a><i class="bi bi-chevron-right"></i><a href="{% url 'teacher_classroom_detail' report.classroom.id %}">{{ report.classroom.name }}</a><i class="bi bi-chevron-right"></i><a href="{% url 'teacher_student_report' report.classroom.id report.student.id %}">{{ report.student.username }}</a><i class="bi bi-chevron-right"></i><strong>{{ report.goal.title|truncatechars:44 }}</strong></div>
+
+  <div class="tp-report-layout">
+    <aside class="tp-goal-sidebar" aria-label="Student learning goals">
+      <div class="tp-goal-sidebar-student"><span class="tp-avatar">{{ report.student.username|slice:":1"|upper }}</span><div><small>Student</small><strong>{{ report.student.username }}</strong></div><a href="{% url 'teacher_student_report' report.classroom.id report.student.id %}" aria-label="Back to student overview"><i class="bi bi-grid"></i></a></div>
+      <div class="tp-goal-sidebar-head"><div><span>Learning goals</span><strong>{{ report.goal_count }}</strong></div><label class="tp-sidebar-search"><i class="bi bi-search"></i><span class="visually-hidden">Search learning goals</span><input type="search" placeholder="Find a goal" data-goal-search autocomplete="off"></label></div>
+      <nav class="tp-goal-nav" data-goal-list>
+        {% for goal_item in report.goal_navigation %}<a class="tp-goal-nav-item {% if goal_item.is_selected %}is-active{% endif %}" href="{% url 'teacher_student_goal_report' report.classroom.id report.student.id goal_item.id %}" data-goal-nav-item data-search-text="{{ goal_item.title }} {{ goal_item.domain }} {{ goal_item.branch }}"><span class="tp-status-dot tp-status-dot-{{ goal_item.status.key }}"></span><div><strong>{{ goal_item.title }}</strong><small>{{ goal_item.domain|default:"General" }}{% if goal_item.branch %} / {{ goal_item.branch }}{% endif %}</small></div><span class="tp-goal-nav-score">{{ goal_item.quality_score }}%</span></a>{% endfor %}
+      </nav>
+      <div class="tp-sidebar-empty" data-goal-empty hidden>No matching goals.</div>
+    </aside>
+
+    <div class="tp-report-main">
+      <section class="tp-goal-report-head">
+        <div><div class="tp-heading-meta"><span class="tp-status tp-status-{{ report.goal.analysis.status.key }}"><i></i>{{ report.goal.analysis.status.label }}</span><span>{{ report.goal.status_label }}</span><span>Updated {{ report.goal.last_activity_at|slice:":10" }}</span></div><p class="tp-goal-domain">{{ report.goal.domain|default:"General" }}{% if report.goal.branch %} / {{ report.goal.branch }}{% endif %}</p><h1>{{ report.goal.title }}</h1><p>{{ report.goal.preference_text }}</p></div>
+        <button class="tp-quiet-button" type="button" data-print-page><i class="bi bi-printer"></i>Print report</button>
+      </section>
+
+      <section class="tp-goal-kpis" aria-label="Goal report summary">
+        <article><span>Quality score</span><strong>{{ report.goal.mastery.quality_score }}%</strong><small>{{ report.goal.mastery.quality_state.label }}</small></article>
+        <article><span>Weakest dimension</span><strong>{{ report.goal.mastery.weakest_label }}</strong><small>Priority learning dimension</small></article>
+        <article><span>Evidence points</span><strong>{{ report.goal.evidence_total }}</strong><small>{{ report.goal.chat_count }} chats · {{ report.goal.answered_probe_count }} probes</small></article>
+        <article><span>Learning pattern</span><strong>{{ report.goal.mastery.curve_label }}</strong><small>{{ report.goal.mastery.curve_confidence }}% confidence</small></article>
+      </section>
+
+      <section class="tp-panel tp-report-workspace" data-tab-scope>
+        <div class="tp-tabs tp-report-tabs" role="tablist" aria-label="Learning report sections">
+          <button class="tp-tab is-active" type="button" role="tab" aria-selected="true" data-tab-target="goal-overview"><i class="bi bi-grid-1x2"></i>Overview</button>
+          <button class="tp-tab" type="button" role="tab" aria-selected="false" data-tab-target="goal-assessment"><i class="bi bi-clipboard2-pulse"></i>Self-assessment{% if report.goal.assessment.exists %}<span class="tp-tab-dot"></span>{% endif %}</button>
+          <button class="tp-tab" type="button" role="tab" aria-selected="false" data-tab-target="goal-evidence"><i class="bi bi-activity"></i>Learning evidence <span>{{ report.goal.evidence_total }}</span></button>
+          <button class="tp-tab" type="button" role="tab" aria-selected="false" data-tab-target="goal-concepts"><i class="bi bi-diagram-3"></i>Concepts <span>{{ report.goal.mastery.concept_count }}</span></button>
+        </div>
+
+        <div id="goal-overview" class="tp-report-panel" data-tab-panel>
+          <section class="tp-analysis-banner tp-analysis-{{ report.goal.analysis.status.key }}"><div class="tp-analysis-icon"><i class="bi bi-stars"></i></div><div><p class="tp-kicker">Learning Workflow Demo teaching analysis</p><h2>{{ report.goal.analysis.headline }}</h2><p>Generated from this goal’s current assessment, conversations, probes, and mastery state.</p></div></section>
+          <div class="tp-report-two-column">
+            <section class="tp-report-card"><div class="tp-card-heading"><div><p class="tp-kicker">Four dimensions</p><h2>Current mastery profile</h2></div><span class="tp-status tp-status-{{ report.goal.mastery.quality_state.key }}"><i></i>{{ report.goal.mastery.quality_state.label }}</span></div><div class="tp-dimension-list">{% for dimension in report.goal.mastery.dimension_rows %}<article><div class="tp-dimension-icon tp-dimension-{{ dimension.key }}"><i class="bi {{ dimension.icon }}"></i></div><div><div class="tp-dimension-head"><strong>{{ dimension.label }}</strong><span>{{ dimension.value }}%</span></div><span class="tp-progress"><i class="tp-progress-{{ dimension.key }}" style="width: {{ dimension.value }}%"></i></span><small>{{ dimension.state.label }}</small></div></article>{% endfor %}</div></section>
+            <section class="tp-report-card"><div class="tp-card-heading"><div><p class="tp-kicker">Visual comparison</p><h2>Mastery radar</h2></div></div><div class="tp-chart-box"><canvas id="tp-goal-radar" aria-label="Four-dimension mastery radar chart"></canvas></div></section>
+          </div>
+          {% if report.goal.trend.has_data %}<section class="tp-report-card tp-trend-card"><div class="tp-card-heading tp-trend-heading"><div><p class="tp-kicker">Longitudinal evidence</p><h2>Mastery trend</h2><p>{{ report.goal.trend.checkpoint_count }} weekly checkpoints · {% if report.goal.trend.delta > 0 %}+{% endif %}{{ report.goal.trend.delta }} points since the first checkpoint</p></div><div class="tp-trend-ranges" aria-label="Trend time range"><button type="button" data-trend-range="4">4W</button><button type="button" data-trend-range="8">8W</button><button class="is-active" type="button" data-trend-range="all">All</button></div></div><div class="tp-chart-box tp-chart-box-trend"><canvas id="tp-goal-trend" aria-label="Weekly four-dimension mastery trend chart"></canvas></div></section>{% endif %}
+          <div class="tp-report-two-column">
+            <section class="tp-report-card"><div class="tp-card-heading"><div><p class="tp-kicker">Instruction plan</p><h2>What to do next</h2></div></div>{% if report.goal.analysis.strengths %}<div class="tp-insight-block is-strength"><span><i class="bi bi-shield-check"></i>Observed strengths</span><p>{{ report.goal.analysis.strengths|join:", " }}</p></div>{% endif %}{% if report.goal.analysis.risks %}<div class="tp-insight-block is-risk"><span><i class="bi bi-exclamation-diamond"></i>Risk areas</span><p>{{ report.goal.analysis.risks|join:", " }}</p></div>{% endif %}<ol class="tp-action-plan">{% for action in report.goal.analysis.next_actions %}<li><span>{{ forloop.counter }}</span><p>{{ action }}</p></li>{% endfor %}</ol></section>
+            <section class="tp-report-card"><div class="tp-card-heading"><div><p class="tp-kicker">Recent sequence</p><h2>Evidence timeline</h2></div><button class="tp-text-button" type="button" data-tab-jump="goal-evidence">View all</button></div>{% if report.goal.timeline %}<div class="tp-timeline">{% for item in report.goal.timeline|slice:":6" %}<article><span class="tp-timeline-icon"><i class="bi {{ item.icon }}"></i></span><div><small>{{ item.label }} · {{ item.at|slice:":10" }}</small><strong>{{ item.title|truncatechars:105 }}</strong><span>{{ item.meta }}</span></div></article>{% endfor %}</div>{% else %}<div class="tp-empty"><strong>No activity evidence yet</strong><span>Chats, probes, and scored events will appear here.</span></div>{% endif %}</section>
+          </div>
+        </div>
+
+        <div id="goal-assessment" class="tp-report-panel" data-tab-panel hidden>
+          {% if report.goal.assessment.exists %}
+          <div class="tp-subsection-title"><div><p class="tp-kicker">Self-reported · guidance only</p><h2>Student perceived starting profile</h2><p>Submitted {{ report.goal.assessment.created_at|slice:":10" }} · Goal alignment: {{ report.goal.assessment.goal_alignment }}</p>{% if report.goal.assessment.target_problem %}<p><b>Assessed task family:</b> {{ report.goal.assessment.scope_contract.normalized_task_family|default:report.goal.assessment.target_problem }}</p>{% endif %}<p>This section reflects the student's own report. Observed mastery appears separately and requires admitted Probe evidence.</p></div></div>
+          <div class="tp-report-two-column tp-assessment-grid">
+            <section class="tp-report-card"><h3>Student reflection</h3><div class="tp-prose-box">{{ report.goal.assessment.student_text|linebreaksbr }}</div></section>
+            <section class="tp-report-card"><h3>Evaluation report</h3><div class="tp-prose-box">{{ report.goal.assessment.evaluation_report|linebreaksbr|default:"No narrative evaluation was generated." }}</div></section>
+          </div>
+          {% if report.goal.assessment.perceived_dimensions %}<section class="tp-report-card tp-section-inner"><div class="tp-card-heading"><div><p class="tp-kicker">Evidence sufficiency</p><h2>Self-reported dimensions</h2></div></div><div class="tp-assessment-sections">{% for dimension in report.goal.assessment.perceived_dimensions %}<article><div><strong>{{ dimension.label }}</strong></div><p>{{ dimension.band }}</p><small><b>Self-report evidence:</b> {{ dimension.evidence_sufficiency }}</small></article>{% endfor %}</div></section>{% endif %}
+          {% if report.goal.assessment.structured_sections %}<section class="tp-report-card tp-section-inner"><div class="tp-card-heading"><div><p class="tp-kicker">Structured interpretation</p><h2>Assessment dimensions</h2></div></div><div class="tp-assessment-sections">{% for section in report.goal.assessment.structured_sections %}<article><div><strong>{{ section.label }}</strong>{% if section.score != None %}<span>{{ section.score }}%</span>{% endif %}</div>{% if section.summary %}<p>{{ section.summary }}</p>{% endif %}{% for detail in section.details %}<small><b>{{ detail.label }}:</b> {{ detail.value }}</small>{% endfor %}</article>{% endfor %}</div></section>{% endif %}
+          {% if report.goal.assessment.strategy_items %}<div class="tp-section-inner"><section class="tp-report-card"><p class="tp-kicker">Operational plan</p><h3>Suggested learning strategy</h3><dl class="tp-data-list">{% for item in report.goal.assessment.strategy_items %}<div><dt>{{ item.label }}</dt><dd>{{ item.value }}</dd></div>{% endfor %}</dl></section></div>{% endif %}
+          {% else %}<div class="tp-empty tp-empty-large"><span class="tp-empty-icon"><i class="bi bi-clipboard2-pulse"></i></span><strong>No self-assessment for this goal</strong><span>A baseline reflection is needed before the teacher can compare perceived and observed mastery.</span></div>{% endif %}
+        </div>
+
+        <div id="goal-evidence" class="tp-report-panel" data-tab-panel hidden>
+          <div class="tp-subsection-title tp-subsection-title-actions"><div><p class="tp-kicker">Traceable learning activity</p><h2>Learning evidence</h2><p>Review the actual questions, answers, probes, and scored signals behind the report.</p></div><div class="tp-filter-chips" aria-label="Filter evidence"><button class="is-active" type="button" data-evidence-filter="all">All</button><button type="button" data-evidence-filter="chat">Chats</button><button type="button" data-evidence-filter="probe">Probes</button><button type="button" data-evidence-filter="event">Scored events</button></div></div>
+          <div class="tp-evidence-list" data-evidence-list>
+            {% for chat in report.goal.recent_chat %}<details class="tp-evidence-card" data-evidence-item="chat"><summary><span class="tp-evidence-icon is-chat"><i class="bi bi-chat-square-text"></i></span><div><span>Learning conversation · {{ chat.answer_style_label }}</span><strong>{{ chat.question }}</strong><small>{{ chat.timestamp|slice:":10" }} · {{ chat.processing_status|title }}</small></div><i class="bi bi-chevron-down"></i></summary><div class="tp-evidence-body"><p class="tp-evidence-label">Learning Workflow Demo response</p><div class="tp-prose-box">{{ chat.answer|linebreaksbr }}</div></div></details>{% endfor %}
+            {% for probe in report.goal.probes %}<details class="tp-evidence-card" data-evidence-item="probe"><summary><span class="tp-evidence-icon is-probe"><i class="bi bi-bullseye"></i></span><div><span>{{ probe.status_label }} diagnostic probe · {{ probe.target_label }}</span><strong>{{ probe.question_text }}</strong><small>{{ probe.concept_label }} · {{ probe.created_at|slice:":10" }}</small></div><i class="bi bi-chevron-down"></i></summary><div class="tp-evidence-body"><p class="tp-evidence-label">Student answer</p><div class="tp-prose-box">{{ probe.student_answer|linebreaksbr|default:"No answer submitted yet." }}</div></div></details>{% endfor %}
+            {% for event in report.goal.events %}<details class="tp-evidence-card" data-evidence-item="event"><summary><span class="tp-evidence-icon is-event"><i class="bi bi-activity"></i></span><div><span>{{ event.source_label }} · {{ event.concept_label }}</span><strong>{{ event.question_text|default:"Mastery evidence updated" }}</strong><small>{{ event.created_at|slice:":10" }} · Accuracy {{ event.accuracy_score }}% · Confidence {{ event.confidence }}%</small></div><i class="bi bi-chevron-down"></i></summary><div class="tp-evidence-body">{% if event.student_answer %}<p class="tp-evidence-label">Student answer</p><div class="tp-prose-box">{{ event.student_answer|linebreaksbr }}</div>{% endif %}{% if event.evidence %}<p class="tp-evidence-label">Evaluation evidence</p><div class="tp-prose-box">{{ event.evidence|linebreaksbr }}</div>{% endif %}<div class="tp-score-pair"><span>Accuracy <strong>{{ event.accuracy_score }}%</strong></span><span>Confidence <strong>{{ event.confidence }}%</strong></span></div></div></details>{% endfor %}
+          </div>
+          {% if not report.goal.recent_chat and not report.goal.probes and not report.goal.events %}<div class="tp-empty tp-empty-large"><span class="tp-empty-icon"><i class="bi bi-activity"></i></span><strong>No evidence captured yet</strong><span>Learning conversations, probes, and mastery events will appear here.</span></div>{% endif %}
+          <div class="tp-empty" data-evidence-empty hidden><strong>No evidence in this category</strong><span>Choose another filter to continue reviewing.</span></div>
+        </div>
+
+        <div id="goal-concepts" class="tp-report-panel" data-tab-panel hidden>
+          <div class="tp-subsection-title"><div><p class="tp-kicker">Concept-level diagnosis</p><h2>Concept mastery</h2><p>Use concept rows to locate exactly where the student is stable or struggling.</p></div></div>
+          {% if report.goal.concept_signals %}<section class="tp-concept-signal-strip"><span>Recently discussed</span><div>{% for signal in report.goal.concept_signals %}<span class="tp-concept-chip">{{ signal.concept_label }} <strong>{{ signal.count }}</strong><small>{{ signal.confidence }}%</small></span>{% endfor %}</div></section>{% endif %}
+          {% if report.goal.mastery.concepts %}<div class="tp-concept-grid">{% for concept in report.goal.mastery.concepts %}<article class="tp-concept-card"><div class="tp-concept-card-head"><div><p class="tp-kicker">{{ concept.feedback_tier|default:"Concept state" }}</p><h3>{{ concept.concept_label }}</h3></div><span class="tp-score-ring tp-score-ring-{{ concept.quality_state.key }}">{{ concept.quality_score }}%</span></div><div class="tp-concept-meta"><span><i class="bi bi-graph-up"></i>{{ concept.curve_label }}</span><span><i class="bi bi-bullseye"></i>{{ concept.event_count }} events</span><span><i class="bi bi-exclamation-circle"></i>{{ concept.weakest_label|default:"No weak dimension" }}</span></div><div class="tp-mini-dimensions">{% for dimension in concept.dimension_rows %}<div><span>{{ dimension.label }}</span><span class="tp-progress"><i class="tp-progress-{{ dimension.key }}" style="width: {{ dimension.value }}%"></i></span><strong>{{ dimension.value }}%</strong></div>{% endfor %}</div></article>{% endfor %}</div>{% else %}<div class="tp-empty tp-empty-large"><span class="tp-empty-icon"><i class="bi bi-diagram-3"></i></span><strong>No concept mastery state yet</strong><span>Concept-level mastery appears after baseline or probe evidence has been scored.</span></div>{% endif %}
+        </div>
+      </section>
+    </div>
+  </div>
+</main>
+{{ report.goal.mastery.average_mastery|json_script:"tp-goal-dimension-data" }}
+{{ report.goal.trend.points|json_script:"tp-goal-trend-data" }}
+{% endblock %}
+
+{% block scripts %}{{ block.super }}<script src="{% static 'js/teacher_portal.js' %}"></script>{% endblock %}
